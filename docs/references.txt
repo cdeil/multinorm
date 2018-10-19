@@ -1,0 +1,29 @@
+.. _Wikipedia multivariate normal: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
+.. _Wikipedia Mahalanobis distance: https://en.wikipedia.org/wiki/Mahalanobis_distance
+.. _marginal distribution: https://en.wikipedia.org/wiki/Marginal_distribution
+.. _conditional distribution: https://en.wikipedia.org/wiki/Conditional_probability_distribution
+.. _stats book: https://press.princeton.edu/titles/10159.html
+.. _numpy: https://docs.scipy.org/doc/numpy/reference/
+.. _numpy.random.multivariate_normal: https://docs.scipy.org/doc/numpy/reference/generated/numpy.random.multivariate_normal.html
+.. _scipy: https://docs.scipy.org/doc/scipy/reference/
+.. _scipy.stats.multivariate_normal: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.multivariate_normal.html
+.. _scipy.optimize_curve_fit: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+.. _matplotlib.patches.Ellipse: https://matplotlib.org/api/_as_gen/matplotlib.patches.Ellipse.html
+.. _sklearn.covariance: http://scikit-learn.org/stable/modules/covariance.html
+.. _statsmodels: http://www.statsmodels.org/
+.. _uncertainties: https://pythonhosted.org/uncertainties/
+.. _matplotlib: https://matplotlib.org/
+.. _multinorm on Github: https://github.com/cdeil/multinorm
+.. _multinorm docs: https://multinorm.readthedocs.io
+.. _multinorm.py: https://github.com/cdeil/multinorm/blob/master/multinorm.py
+.. _test_multinorm.py: https://github.com/cdeil/multinorm/blob/master/test_multinorm.py
+.. _docs: https://github.com/cdeil/multinorm/tree/master/docs
+.. _black: https://github.com/ambv/black
+.. _Wolfram MultinormalDistribution: https://reference.wolfram.com/language/ref/MultinormalDistribution.html
+.. _sigma in the corner.py docs: https://corner.readthedocs.io/en/latest/pages/sigmas.html
+.. _standard deviation: https://en.wikipedia.org/wiki/Standard_deviation
+.. _68–95–99.7 rule: https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
+.. _mcerp: https://github.com/tisimst/mcerp
+.. _soerp: https://github.com/tisimst/soerp
+
+.. module:: multinorm

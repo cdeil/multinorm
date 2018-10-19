@@ -1,0 +1,31 @@
+# Conda environment for multinorm development
+#
+# Install:    conda env create -f environment.yml
+# Update:     conda env update -f environment.yml
+# Activate:   conda activate multinorm
+# Deactivate: conda deactivate
+
+name: multinorm
+
+dependencies:
+  - python==3.7
+  - ipython
+  - jupyter
+  - jupyterlab
+  - jupyterlab_launcher
+  - numpy
+  - scipy
+  - matplotlib
+  - uncertainties
+  - pytest
+  - pytest-cov
+  - sphinx
+  - pylint
+  - flake8
+  - pip:
+    - setuptools_scm
+    - numpydoc
+    - sphinx_rtd_theme
+    - pydocstyle
+    - black
+    - twine
