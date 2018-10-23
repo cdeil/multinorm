@@ -10,10 +10,10 @@ pass a ``mean`` vector, a ``covariance`` matrix (both as Numpy arrays)
 and optionally a list of parameter ``names``::
 
     from multinorm import MultiNorm
-    mean = [2, 3]
-    covariance = [[1, 2], [3, 4]]
-    names = ["a", "b"]
-    multi_norm = MultiNorm(mean, covariance, names)
+    mean = [10, 20, 30]
+    covariance = [[1, 0, 0], [0, 4, 0], [0, 0, 9]]
+    names = ["a", "b", "c"]
+    mn = MultiNorm(mean, covariance, names)
 
 But where do these things come from?
 
@@ -49,3 +49,9 @@ From publication
 
 TODO: show example how to take covar (or par errors) from a
 publication or blog post, i.e. as inputs.
+
+
+From product
+------------
+
+TODO: document from_product

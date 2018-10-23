@@ -76,6 +76,11 @@ def test_conditional(mn):
     assert_allclose(mn2.err, [1, 3])
 
 
+def test_pdf(mn):
+    pdf = mn.pdf([[10, 20, 30]])
+    assert_allclose(pdf, 0.010582272655706831)
+
+
 def test_to_matplotlib_ellipse(mn):
     ellipse = mn.marginal(["a", "b"]).to_matplotlib_ellipse()
     assert_allclose(ellipse.center, (10, 20))

@@ -75,6 +75,9 @@ class MultiNorm(object):
         self._cov = cov
         self._names = names
 
+        self._par_lookup = _ParLookup(names)
+        self._scipy = None
+
     def __repr__(self):
         return "{}(n={})".format(self.__class__.__name__, self.n)
 
@@ -159,18 +162,16 @@ class MultiNorm(object):
         mean = np.dot(cov, means_weighted)
         return cls(mean, cov, names)
 
-    def to_scipy(self):
-        """Convert to `scipy.stats.multivariate_normal`_ object.
+    @property
+    def scipy(self):
+        """Frozen `scipy.stats.multivariate_normal`_ distribution object.
 
-        The returned object is a "frozen" distribution object,
-        with ``mean`` and ``covar`` set. It offers methods
-        for ``pdf``, ``logpdf`` to evaluate the probability density
-        function at given points, and ``rvs`` to draw random variate
-        samples, i.e. random points from the distribution.
-
-        See examples in :ref:`analyse-scipy`.
+        A cached property. Used for many computations internally.
         """
-        return scipy.stats.multivariate_normal(self.mean, self.cov)
+        if self._scipy is None:
+            self._scipy = scipy.stats.multivariate_normal(self.mean, self.cov)
+
+        return self._scipy
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
@@ -275,17 +276,6 @@ class MultiNorm(object):
         """
         return scipy.linalg.pinvh(self.cov)
 
-    def sigma_distance(self, point):
-        """Number of standard deviations from the mean (float).
-
-        Also called the Mahalanobis distance.
-        See :ref:`theory_sigmas`.
-        """
-        point = np.asanyarray(point)
-        d = self._mean - point
-        sigma = np.dot(np.dot(d.T, self.precision), d)
-        return np.sqrt(sigma)
-
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
 
@@ -301,7 +291,7 @@ class MultiNorm(object):
         MultiNorm
             Marginal distribution
         """
-        idx = self._pars_to_idx(pars)
+        idx = self._par_lookup._pars_to_idx(pars)
         mean = self.mean[idx]
         cov = self.cov[np.ix_(idx, idx)]
         names = [self.names[_] for _ in idx]
@@ -333,7 +323,7 @@ class MultiNorm(object):
         # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
         # - "2" refers to the fixed parameters
         # - "1" refers to the remaining (kept) parameters
-        idx2 = self._pars_to_idx(pars)
+        idx2 = self._par_lookup._pars_to_idx(pars)
         idx1 = np.setdiff1d(np.arange(self.n), idx2)
 
         values = np.asarray(values, dtype=float)
@@ -353,6 +343,58 @@ class MultiNorm(object):
         cov = cov11 - np.dot(cov12, np.linalg.solve(cov22, cov21))
 
         return self.__class__(mean, cov, names)
+
+    def sigma_distance(self, point):
+        """Number of standard deviations from the mean (float).
+
+        Also called the Mahalanobis distance.
+        See :ref:`theory_sigmas`.
+        """
+        point = np.asanyarray(point)
+        d = self._mean - point
+        sigma = np.dot(np.dot(d.T, self.precision), d)
+        return np.sqrt(sigma)
+
+    def pdf(self, points):
+        """Probability density function.
+
+        Calls `scipy.stats.multivariate_normal`.
+        """
+        return self.scipy.pdf(points)
+
+    def logpdf(self, points):
+        """Natural log of PDF.
+
+        Calls `scipy.stats.multivariate_normal`.
+        """
+        return self.scipy.logpdf(points)
+
+    def sample(self, size=1, random_state=None):
+        """Draw random samples.
+
+        Calls `scipy.stats.multivariate_normal`.
+        """
+        return self.scipy.rvs(size, random_state)
+
+
+def _get_n_from_inputs(mean, cov, names):
+    if mean is not None:
+        return len(mean)
+
+    if names is not None:
+        return len(names)
+
+    if cov is not None:
+        return len(cov)
+
+    raise ValueError("Could not determine number of parameters n.")
+
+
+class _ParLookup(object):
+    """Glorified dict for parameter name lookup"""
+
+    def __init__(self, names):
+        self.names = names
 
     def _pars_to_idx(self, pars):
         """Create parameter index array.
@@ -378,20 +420,3 @@ class MultiNorm(object):
                 raise TypeError()
 
         return np.asarray(idxs, dtype=int)
-
-
-def _get_n_from_inputs(mean, cov, names):
-    if mean is not None:
-        return len(mean)
-
-    if names is not None:
-        return len(names)
-
-    if cov is not None:
-        return len(cov)
-
-    raise ValueError("Could not determine number of parameters n.")
-
-
-def sigma_to_containment(sigma, n):
-    pass

@@ -81,10 +81,6 @@ Error propagation
 
 TODO: to_uncertainties, to_soerp, to_mcerp
 
-Joint
------
-
-TODO: from_product
 
 Sigmas
 ------

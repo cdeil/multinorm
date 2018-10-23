@@ -33,6 +33,15 @@ model to data, or estimate them in some other way.
 
 Further examples to create :class:`MultiNorm` objects are here: :ref:`create`
 
+Read only
+---------
+
+`MultiNorm` objects should be used read-only objects!
+
+If you need to change something (``mean``, ``covariance``, ``names``), make a new object!
+
+TODO: make read-only as much as possible, the document remaining caveats!
+
 .. _gs_analyse:
 
 Analyse
