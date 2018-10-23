@@ -1,5 +1,6 @@
 """Tests for multinorm, using pyest.
 """
+import warnings
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -61,10 +62,7 @@ def test_from_err():
 
 
 def test_from_points():
-    points = [
-        (10, 20, 30),
-        (12, 20, 30),
-    ]
+    points = [(10, 20, 30), (12, 20, 30)]
     names = ["a", "b", "c"]
     mn = MultiNorm.from_points(points, names)
     print(mn)
@@ -112,6 +110,26 @@ def test_logpdf(mn):
 def test_sample(mn):
     res = mn.sample(size=1, random_state=0)
     assert_allclose(res, [10.978738, 20.800314, 35.292157])
+
+
+def test_to_uncertainties(mn):
+
+    # TODO: remove warning filter when this is resolved:
+    # https://github.com/lebigot/uncertainties/pull/88
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        res = mn.to_uncertainties()
+
+    assert isinstance(res, tuple)
+    assert len(res) == 3
+
+    a, b, c = res
+    assert_allclose(a.nominal_value, 10)
+    assert_allclose(a.std_dev, 1)
+    assert_allclose(b.nominal_value, 20)
+    assert_allclose(b.std_dev, 2)
+    assert_allclose(c.nominal_value, 30)
+    assert_allclose(c.std_dev, 3)
 
 
 def test_to_matplotlib_ellipse(mn):
