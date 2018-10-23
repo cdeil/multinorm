@@ -5,7 +5,7 @@ import warnings
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
-from multinorm import MultiNorm
+from multinorm import MultiNorm, Parameter
 
 
 @pytest.fixture()
@@ -50,6 +50,17 @@ def test_repr(mn):
 
 def test_str(mn):
     assert "MultiNorm" in str(mn)
+
+
+def test_getitem(mn):
+    par = mn['c']
+
+    assert isinstance(par, Parameter)
+    assert par.index == 2
+    assert par.name == 'c'
+    assert_allclose(par.mean, 30)
+    assert_allclose(par.err, 3)
+    assert repr(par) == "Parameter(index=2, name='c')"
 
 
 def test_err(mn):

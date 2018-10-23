@@ -49,6 +49,9 @@ class MultiNorm(object):
         self._scipy = multivariate_normal(mean, cov, allow_singular=True)
         self._name_index = _NameIndex(names, self.n)
 
+        # For other cached properties
+        self._cache = {}
+
     def __repr__(self):
         return "{}(n={})".format(self.__class__.__name__, self.n)
 
@@ -222,7 +225,10 @@ class MultiNorm(object):
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        return np.sqrt(np.diag(self.cov))
+        if 'err' not in self._cache:
+            self._cache['err'] = np.sqrt(np.diag(self.cov))
+
+        return self._cache['err']
 
     @property
     def correlation(self):
@@ -233,8 +239,11 @@ class MultiNorm(object):
         .. math::
             C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
         """
-        err = self.err
-        return self.cov / np.outer(err, err)
+        if 'correlation' not in self._cache:
+            c = self.cov / np.outer(self.err, self.err)
+            self._cache['correlation'] = c
+
+        return self._cache['correlation']
 
     @property
     def precision(self):
@@ -345,6 +354,42 @@ class MultiNorm(object):
         Calls `scipy.stats.multivariate_normal`_.
         """
         return self.scipy.rvs(size, random_state)
+
+    def __getitem__(self, par):
+        idx = self._name_index._pars_to_idx(par)[0]
+        return Parameter(idx, self)
+
+
+class Parameter(object):
+    """Parameter information.
+
+    Proxy object to MultiNorm.
+
+    TODO: should we instead pre-compute and cover everything over?
+    """
+
+    def __init__(self, index, multi_norm):
+        self._index = index
+        self._multi_norm = multi_norm
+
+    def __repr__(self):
+        return 'Parameter(index={!r}, name={!r})'.format(self.index, self.name)
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def name(self):
+        return self._multi_norm.names[self.index]
+
+    @property
+    def mean(self):
+        return self._multi_norm.mean[self.index]
+
+    @property
+    def err(self):
+        return self._multi_norm.err[self.index]
 
 
 class _NameIndex(object):
