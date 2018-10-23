@@ -8,6 +8,7 @@
 .. _scipy: https://docs.scipy.org/doc/scipy/reference/
 .. _scipy.stats.multivariate_normal: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.multivariate_normal.html
 .. _scipy.optimize_curve_fit: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+.. _pandas: https://pandas.pydata.org/
 .. _matplotlib.patches.Ellipse: https://matplotlib.org/api/_as_gen/matplotlib.patches.Ellipse.html
 .. _sklearn.covariance: http://scikit-learn.org/stable/modules/covariance.html
 .. _statsmodels: http://www.statsmodels.org/

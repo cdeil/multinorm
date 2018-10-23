@@ -15,6 +15,7 @@ dependencies:
   - jupyterlab_launcher
   - numpy
   - scipy
+  - pandas
   - matplotlib
   - uncertainties
   - pytest

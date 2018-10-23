@@ -15,7 +15,7 @@ setup(
     name="multinorm",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
-    install_requires=["numpy", "scipy"],
+    install_requires=["numpy", "scipy", "pandas"],
     description="Multivariate Normal Distributions for Humans",
     long_description=long_description,
     author="Christoph Deil",

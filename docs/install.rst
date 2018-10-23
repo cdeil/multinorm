@@ -7,10 +7,12 @@ To install ``multinorm`` use pip::
 
     pip install multinorm
 
-This will also install `numpy`_ and `scipy`_ as a core dependencies.
+Dependencies:
 
-If you want to call the plotting methods, you should install
-`matplotlib`_ also.
+- `numpy`_
+- `scipy`_
+- `pandas`_ - optional, for summary tables and reports
+- `matplotlib`_ - optional, for plotting
 
 This package consists of a single Python file `multinorm.py`_.
 Most users will not care about this implementation detail,
