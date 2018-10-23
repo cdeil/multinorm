@@ -11,8 +11,6 @@ A Python class to work with model fit results
 """
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
-import scipy.stats
-import scipy.linalg
 
 __all__ = ["MultiNorm"]
 
@@ -155,6 +153,7 @@ class MultiNorm(object):
 
         precisions = [_.precision for _ in distributions]
         precision = np.sum(precisions, axis=0)
+        # TODO: is there a better (faster or more accurate) way to compute `cov`?
         cov = np.linalg.inv(precision)
 
         means_weighted = [_._mean_weighted for _ in distributions]
@@ -169,7 +168,8 @@ class MultiNorm(object):
         A cached property. Used for many computations internally.
         """
         if self._scipy is None:
-            self._scipy = scipy.stats.multivariate_normal(self.mean, self.cov)
+            from scipy.stats import multivariate_normal
+            self._scipy = multivariate_normal(self.mean, self.cov)
 
         return self._scipy
 
@@ -217,6 +217,7 @@ class MultiNorm(object):
 
     @property
     def _eigh(self):
+        # TODO: can we replace this with something from `self.scipy.cov_info`?
         return np.linalg.eigh(self.cov)
 
     @property
@@ -274,7 +275,7 @@ class MultiNorm(object):
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        return scipy.linalg.pinvh(self.cov)
+        return self.scipy.cov_info.pinv
 
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
