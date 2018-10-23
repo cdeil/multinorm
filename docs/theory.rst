@@ -52,6 +52,42 @@ fixed, and that are kept free.
 The formulae to obtain the mean and covariance of the conditional distribution are given
 `here <https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions>`_.
 
+.. _theory_product:
+
+Product distribution
+--------------------
+
+TODO: improve this section: https://github.com/cdeil/multinorm/issues/13
+
+We should give the full equations, the ones below are the special case for distributions without correlations.
+
+The approximation we will use can be found in many textbooks,
+e.g. Section 5.6.1 `stats book`_. given :math:`n` Gaussian likelihood
+estimates with parameter estimates :math:`x_i` and known parameter errors :math:`\sigma_i`:
+
+.. math::
+
+    p(\mu | {x_i}, {\sigma_i}),
+
+if we define "weights" as inverse square of errors
+
+.. math::
+
+    w_i = 1 / \sigma_i^2,
+    \sigma_i = 1 / \sqrt{w_i},
+
+then the from_product maximum likelihood estimate error is given by (Equation 5.50):
+
+.. math::
+
+    \mu_0 = \frac{\sum{w_i x_i}}{\sum{w_i}}
+
+and the from_product measurement parameter error is given by
+
+.. math::
+
+    w = \sum{w_i}.
+
 .. _theory_sigmas:
 
 Sigmas
@@ -106,35 +142,3 @@ and will return an ellipse that matches the points with Mahalanobis distance
 :math:`d^2 = n * \sigma`.
 
 See also `sigma in the corner.py docs`_.
-
-.. _theory_combine:
-
-Combine
--------
-
-The approximation we will use can be found in many textbooks,
-e.g. Section 5.6.1 `stats book`_. given :math:`n` Gaussian likelihood
-estimates with parameter estimates :math:`x_i` and known parameter errors :math:`\sigma_i`:
-
-.. math::
-
-    p(\mu | {x_i}, {\sigma_i}),
-
-if we define "weights" as inverse square of errors
-
-.. math::
-
-    w_i = 1 / \sigma_i^2,
-    \sigma_i = 1 / \sqrt{w_i},
-
-then the joint maximum likelihood estimate error is given by (Equation 5.50):
-
-.. math::
-
-    \mu_0 = \frac{\sum{w_i x_i}}{\sum{w_i}}
-
-and the joint measurement parameter error is given by
-
-.. math::
-
-    w = \sum{w_i}.

@@ -130,10 +130,13 @@ class MultiNorm(object):
         return cls(mean, cov, names)
 
     @classmethod
-    def joint(cls, distributions):
-        """Create joint `MultiNorm` distribution.
+    def from_product(cls, distributions):
+        """Create `MultiNorm` as product distribution.
 
-        See :ref:`theory_combine` .
+        This represents the joint likelihood distribution, assuming
+        the individual distributions are from independent measurements.
+
+        See :ref:`theory_product` .
 
         Parameters
         ----------
@@ -143,7 +146,7 @@ class MultiNorm(object):
         Returns
         -------
         MultiNorm
-            Combined joint distribution
+            Product distribution
         """
         names = distributions[0].names
 

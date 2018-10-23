@@ -51,6 +51,17 @@ def test_str(mn):
     assert "MultiNorm" in str(mn)
 
 
+def test_from_product():
+    mn1 = MultiNorm(mean=[0, 0], names=["a", "b"])
+    mn2 = MultiNorm(mean=[2, 4], names=["a", "b"])
+
+    mn = MultiNorm.from_product([mn1, mn2])
+
+    assert mn.names == ["a", "b"]
+    assert_allclose(mn.mean, [1, 2])
+    assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
+
+
 def test_marginal(mn):
     mn2 = mn.marginal([0, 2])
     assert mn2.names == ["a", "c"]
@@ -63,17 +74,6 @@ def test_conditional(mn):
     assert mn2.names == ["a", "c"]
     assert_allclose(mn2.mean, [10, 30])
     assert_allclose(mn2.err, [1, 3])
-
-
-def test_joint():
-    mn1 = MultiNorm(mean=[0, 0], names=["a", "b"])
-    mn2 = MultiNorm(mean=[2, 4], names=["a", "b"])
-
-    mn = MultiNorm.joint([mn1, mn2])
-
-    assert mn.names == ["a", "b"]
-    assert_allclose(mn.mean, [1, 2])
-    assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
 
 def test_to_matplotlib_ellipse(mn):

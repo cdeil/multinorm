@@ -84,7 +84,7 @@ TODO: to_uncertainties, to_soerp, to_mcerp
 Joint
 -----
 
-TODO: joint
+TODO: from_product
 
 Sigmas
 ------
