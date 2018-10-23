@@ -39,8 +39,34 @@ TODO: show example using iminuit
 From points
 -----------
 
-TODO: show example using emcee where points come from a trace
-and ``np.std`` and ``np.cov`` is used to get the inputs
+A common way to analyse likelihood or in Bayesian analyses the
+posterior probability distributions is to use MCMC methods that
+sample the distribution. E.g. `emcee`_ or `pymc`_ are Python packages
+that generate this kind of output.
+
+Estimating the multivariate normal distribution from samples well
+can be difficult, there are many methods with different trade-offs.
+We recommend using a different package for this task, e.g. `sklearn.covariance`_.
+
+That said, there is a method `Multinorm.from_points` that calls `numpy.std`
+to compute the mean vector, and `numpy.cov` to compute what's sometimes called
+the "naive" multivariate normal estimate.
+
+Points should always be given as 2-dimensional arrays with shape ``(n_dim, n_points)``.
+
+::
+
+    >>> points = mn.sample(size=100, random_state=0)
+    >>> MultiNorm.from_points(points)
+    MultiNorm(n=3)
+    names: ['par_0', 'par_1', 'par_2']
+    mean: [ 9.87581591 20.21250462 30.30156153]
+    err: [0.98090098 1.97394775 3.09360932]
+    cov:
+    [[ 0.96216674 -0.04439635  0.33802118]
+     [-0.04439635  3.89646972 -0.45369176]
+     [ 0.33802118 -0.45369176  9.57041861]]
+
 
 .. _create_from_pub:
 

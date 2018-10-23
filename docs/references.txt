@@ -26,5 +26,7 @@
 .. _68–95–99.7 rule: https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
 .. _mcerp: https://github.com/tisimst/mcerp
 .. _soerp: https://github.com/tisimst/soerp
+.. _emcee: https://dfm.io/emcee
+.. _pymc: https://docs.pymc.io
 
 .. module:: multinorm
