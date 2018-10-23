@@ -184,20 +184,6 @@ class MultiNorm(object):
 
         return correlated_values(self.mean, self.cov)
 
-    def to_mcerp(self):
-        """Convert to `mcerp`_ objects.
-
-        TODO: document
-        """
-        # TODO: implement
-
-    def to_soerp(self):
-        """Convert to `soerp`_ objects.
-
-        TODO: document
-        """
-        # TODO: implement
-
     def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
         """Create `matplotlib.patches.Ellipse`_.
 
@@ -297,16 +283,6 @@ class MultiNorm(object):
         sigma = np.dot(np.dot(d.T, self.precision), d)
         return np.sqrt(sigma)
 
-    def conditional(self, pars):
-        """Conditional `MultiNormal` distribution.
-
-        See :ref:`theory_conditional`.
-
-        TODO: document.
-        """
-        idx = self._pars_to_idx(pars)
-        # TODO: implement
-
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
 
@@ -326,6 +302,53 @@ class MultiNorm(object):
         mean = self.mean[idx]
         cov = self.cov[np.ix_(idx, idx)]
         names = [self.names[_] for _ in idx]
+        return self.__class__(mean, cov, names)
+
+    def conditional(self, pars, values):
+        """Conditional `MultiNormal` distribution.
+
+        Resulting lower-dimensional distribution obtained
+        by fixing ``pars`` to ``values``. The output
+        distribution is for the other parameters, the
+        complement of ``pars``.
+
+        See :ref:`theory_conditional`.
+
+        Parameters
+        ----------
+        pars : list
+            Fixed parameters (indices or names)
+        values : list
+            Fixed parameters (values)
+
+        Returns
+        -------
+        MultiNorm
+            Conditional distribution
+        """
+        # The following code follows the formulae from
+        # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+        # - "2" refers to the fixed parameters
+        # - "1" refers to the remaining (kept) parameters
+        idx2 = self._pars_to_idx(pars)
+        idx1 = np.setdiff1d(np.arange(self.n), idx2)
+
+        values = np.asarray(values, dtype=float)
+
+        mean1 = self.mean[idx1]
+        mean2 = self.mean[idx2]
+        names = [self.names[_] for _ in idx1]
+
+        cov11 = self.cov[np.ix_(idx1, idx1)]
+        cov12 = self.cov[np.ix_(idx1, idx2)]
+        cov21 = self.cov[np.ix_(idx2, idx1)]
+        cov22 = self.cov[np.ix_(idx2, idx2)]
+
+        # TODO: would it be better to compute the inverse of cov22
+        # instead of calling solve twice?
+        mean = mean1 + np.dot(cov12, np.linalg.solve(cov22, values - mean2))
+        cov = cov11 - np.dot(cov12, np.linalg.solve(cov22, cov21))
+
         return self.__class__(mean, cov, names)
 
     def _pars_to_idx(self, pars):

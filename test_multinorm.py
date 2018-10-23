@@ -58,6 +58,13 @@ def test_marginal(mn):
     assert_allclose(mn2.err, [1, 3])
 
 
+def test_conditional(mn):
+    mn2 = mn.conditional(1, 20)
+    assert mn2.names == ["a", "c"]
+    assert_allclose(mn2.mean, [10, 30])
+    assert_allclose(mn2.err, [1, 3])
+
+
 def test_joint():
     mn1 = MultiNorm(mean=[0, 0], names=["a", "b"])
     mn2 = MultiNorm(mean=[2, 4], names=["a", "b"])
