@@ -1,6 +1,7 @@
 """Tests for multinorm, using pyest.
 """
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 from multinorm import MultiNorm
 
@@ -15,9 +16,6 @@ def mn():
 
 
 def test_init():
-    mn = MultiNorm(names=["a", "b"])
-    assert mn.names == ["a", "b"]
-
     mn = MultiNorm(mean=[1, 2])
     assert mn.names == ["par_0", "par_1"]
 
@@ -28,19 +26,20 @@ def test_init():
     assert mn.mean.shape == (1,)
     assert mn.cov.shape == (1, 1)
 
-    # Bad input should give good error
-    with pytest.raises(ValueError):
-        MultiNorm()
+    mn = MultiNorm()
+    assert mn.names == ["par_0"]
 
     with pytest.raises(ValueError):
         MultiNorm(mean=[0, 0, 0], names=["a", "b"])
 
-    # TODO: check more bad inputs, like wrong order or such
 
-
-def test_init_parnames():
-    mn = MultiNorm([0, 0], [[0, 0], [0, 0]])
-    assert mn.names == ["par_0", "par_1"]
+def test_init_singular():
+    # It should be possible to create a MultiNorm
+    # with a singular cov matrix, because e.g.
+    # when fixing parameters, that is what comes out.
+    cov = [[1, 0], [0, 0]]
+    mn = MultiNorm(cov=cov)
+    assert_allclose(mn.cov, cov)
 
 
 def test_repr(mn):
@@ -64,9 +63,15 @@ def test_from_err():
 def test_from_points():
     points = [
         (10, 20, 30),
+        (12, 20, 30),
     ]
     names = ["a", "b", "c"]
     mn = MultiNorm.from_points(points, names)
+    print(mn)
+
+    assert mn.names == names
+    assert_allclose(mn.mean, [11, 20, 30])
+    assert_allclose(mn.cov, [[2, 0, 0], [0, 0, 0], [0, 0, 0]])
 
 
 def test_from_product():

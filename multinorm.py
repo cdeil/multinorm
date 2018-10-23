@@ -11,6 +11,7 @@ A Python class to work with model fit results
 """
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
+from scipy.stats import multivariate_normal
 
 __all__ = ["MultiNorm"]
 
@@ -42,39 +43,10 @@ class MultiNorm(object):
     """
 
     def __init__(self, mean=None, cov=None, names=None):
-        n = _get_n_from_inputs(mean, cov, names)
-
-        if mean is None:
-            mean = np.zeros(n, dtype=float)
-        else:
-            mean = np.asarray(mean, dtype=float)
-            if mean.shape != (n,):
-                raise ValueError(
-                    "mean shape = {!r}, expected ({},)".format(mean.shape, n)
-                )
-
-        if cov is None:
-            cov = np.eye(n, dtype=float)
-        else:
-            cov = np.asarray(cov, dtype=float)
-            if cov.shape != (n, n):
-                raise ValueError(
-                    "cov shape = {!r}, expected ({}, {})".format(cov.shape, n, n)
-                )
-
-        if names is None:
-            names = ["par_{}".format(idx) for idx in range(n)]
-        else:
-            if len(names) != n:
-                raise ValueError("len(names) = {}, expected n={}".format(len(names), n))
-
-        self._n = n
-        self._mean = mean
-        self._cov = cov
-        self._names = names
-
-        self._par_lookup = _ParLookup(names)
-        self._scipy = None
+        # multivariate_normal does a lot of input validation
+        # so we call it first to avoid having to duplicate that
+        self._scipy = multivariate_normal(mean, cov, allow_singular=True)
+        self._name_index = _NameIndex(names, self.n)
 
     def __repr__(self):
         return "{}(n={})".format(self.__class__.__name__, self.n)
@@ -126,7 +98,7 @@ class MultiNorm(object):
         points : numpy.ndarray
             Array of data points with shape ``(n, 2)``.
         """
-        mean = np.mean(points, axis=None)
+        mean = np.mean(points, axis=0)
         cov = np.cov(points, rowvar=False)
         return cls(mean, cov, names)
 
@@ -167,11 +139,6 @@ class MultiNorm(object):
 
         A cached property. Used for many computations internally.
         """
-        if self._scipy is None:
-            from scipy.stats import multivariate_normal
-
-            self._scipy = multivariate_normal(self.mean, self.cov)
-
         return self._scipy
 
     def to_uncertainties(self):
@@ -222,31 +189,31 @@ class MultiNorm(object):
         return np.linalg.eigh(self.cov)
 
     @property
+    def _mean_weighted(self):
+        return np.dot(self.precision, self.mean)
+
+    @property
     def n(self):
         """Number of dimensions of the distribution (int).
 
         Given by the number of parameters.
         """
-        return self._n
-
-    @property
-    def names(self):
-        """Parameter names (`list` of `str`)."""
-        return self._names
+        return self.scipy.dim
 
     @property
     def mean(self):
         """Mean vector (`numpy.ndarray`)."""
-        return self._mean
-
-    @property
-    def _mean_weighted(self):
-        return np.dot(self.precision, self.mean)
+        return self.scipy.mean
 
     @property
     def cov(self):
         """Covariance matrix (`numpy.ndarray`)."""
-        return self._cov
+        return self.scipy.cov
+
+    @property
+    def names(self):
+        """Parameter names (`list` of `str`)."""
+        return self._name_index.names
 
     @property
     def err(self):
@@ -293,7 +260,7 @@ class MultiNorm(object):
         MultiNorm
             Marginal distribution
         """
-        idx = self._par_lookup._pars_to_idx(pars)
+        idx = self._name_index._pars_to_idx(pars)
         mean = self.mean[idx]
         cov = self.cov[np.ix_(idx, idx)]
         names = [self.names[_] for _ in idx]
@@ -325,7 +292,7 @@ class MultiNorm(object):
         # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
         # - "2" refers to the fixed parameters
         # - "1" refers to the remaining (kept) parameters
-        idx2 = self._par_lookup._pars_to_idx(pars)
+        idx2 = self._name_index._pars_to_idx(pars)
         idx1 = np.setdiff1d(np.arange(self.n), idx2)
 
         values = np.asarray(values, dtype=float)
@@ -379,23 +346,23 @@ class MultiNorm(object):
         return self.scipy.rvs(size, random_state)
 
 
-def _get_n_from_inputs(mean, cov, names):
-    if mean is not None:
-        return len(mean)
+class _NameIndex(object):
+    """Parameter index.
 
-    if names is not None:
-        return len(names)
+    Doesn't do much, just store parameter names
+    and match parameter names and indices.
 
-    if cov is not None:
-        return len(cov)
+    If we go all-in on pandas, we could use a
+    pandas index for this functionality.
+    """
 
-    raise ValueError("Could not determine number of parameters n.")
+    def __init__(self, names, n):
+        if names is None:
+            names = ["par_{}".format(idx) for idx in range(n)]
+        else:
+            if len(names) != n:
+                raise ValueError("len(names) = {}, expected n={}".format(len(names), n))
 
-
-class _ParLookup(object):
-    """Glorified dict for parameter name lookup"""
-
-    def __init__(self, names):
         self.names = names
 
     def _pars_to_idx(self, pars):
