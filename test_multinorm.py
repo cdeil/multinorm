@@ -51,6 +51,24 @@ def test_str(mn):
     assert "MultiNorm" in str(mn)
 
 
+def test_from_err():
+    mean = [10, 20, 30]
+    err = [1, 2, 3]
+    names = ["a", "b", "c"]
+    mn = MultiNorm.from_err(mean, err, names)
+    assert_allclose(mn.mean, mean)
+    assert_allclose(mn.err, err)
+    assert mn.names == names
+
+
+def test_from_points():
+    points = [
+        (10, 20, 30),
+    ]
+    names = ["a", "b", "c"]
+    mn = MultiNorm.from_points(points, names)
+
+
 def test_from_product():
     mn1 = MultiNorm(mean=[0, 0], names=["a", "b"])
     mn2 = MultiNorm(mean=[2, 4], names=["a", "b"])
@@ -77,8 +95,18 @@ def test_conditional(mn):
 
 
 def test_pdf(mn):
-    pdf = mn.pdf([[10, 20, 30]])
-    assert_allclose(pdf, 0.010582272655706831)
+    res = mn.pdf([[10, 20, 30]])
+    assert_allclose(res, 0.010582272655706831)
+
+
+def test_logpdf(mn):
+    res = mn.logpdf([[10, 20, 30]])
+    assert_allclose(res, -4.548575068842073)
+
+
+def test_sample(mn):
+    res = mn.sample(size=1, random_state=0)
+    assert_allclose(res, [10.978738, 20.800314, 35.292157])
 
 
 def test_to_matplotlib_ellipse(mn):

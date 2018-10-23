@@ -169,6 +169,7 @@ class MultiNorm(object):
         """
         if self._scipy is None:
             from scipy.stats import multivariate_normal
+
             self._scipy = multivariate_normal(self.mean, self.cov)
 
         return self._scipy
