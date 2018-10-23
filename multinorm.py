@@ -9,6 +9,7 @@ A Python class to work with model fit results
 - Docs: https://multinorm.readthedocs.io
 - License: BSD-3-Clause
 """
+from __future__ import division
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
 from scipy.stats import multivariate_normal
@@ -225,7 +226,7 @@ class MultiNorm(object):
 
     @property
     def correlation(self):
-        r"""Correlation matrix (`numpy.ndarray`).
+        r"""Correlation matrix (:class:`numpy.ndarray`).
 
         Correlation :math:`C` is related to covariance :math:`\Sigma` via:
 
@@ -320,28 +321,28 @@ class MultiNorm(object):
         See :ref:`theory_sigmas`.
         """
         point = np.asanyarray(point)
-        d = self._mean - point
+        d = self.mean - point
         sigma = np.dot(np.dot(d.T, self.precision), d)
         return np.sqrt(sigma)
 
     def pdf(self, points):
         """Probability density function.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls `scipy.stats.multivariate_normal`_.
         """
         return self.scipy.pdf(points)
 
     def logpdf(self, points):
         """Natural log of PDF.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls `scipy.stats.multivariate_normal`_.
         """
         return self.scipy.logpdf(points)
 
     def sample(self, size=1, random_state=None):
         """Draw random samples.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls `scipy.stats.multivariate_normal`_.
         """
         return self.scipy.rvs(size, random_state)
 

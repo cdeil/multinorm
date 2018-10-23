@@ -1,5 +1,6 @@
 """Tests for multinorm, using pyest.
 """
+from __future__ import division
 import warnings
 import pytest
 import numpy as np
@@ -51,6 +52,20 @@ def test_str(mn):
     assert "MultiNorm" in str(mn)
 
 
+def test_err(mn):
+    assert_allclose(mn.err, [1, 2, 3])
+
+
+def test_correlation(mn):
+    expected = np.eye(3)
+    assert_allclose(mn.correlation, expected)
+
+
+def test_precision(mn):
+    expected = np.diag([1, 1 / 4, 1 / 9])
+    assert_allclose(mn.precision, expected)
+
+
 def test_from_err():
     mean = [10, 20, 30]
     err = [1, 2, 3]
@@ -97,6 +112,14 @@ def test_conditional(mn):
     assert_allclose(mn2.err, [1, 3])
 
 
+def test_sigma_distance(mn):
+    d = mn.sigma_distance([10, 20, 30])
+    assert_allclose(d, 0)
+
+    d = mn.sigma_distance([10, 20, 33])
+    assert_allclose(d, 1)
+
+
 def test_pdf(mn):
     res = mn.pdf([[10, 20, 30]])
     assert_allclose(res, 0.010582272655706831)
@@ -113,7 +136,6 @@ def test_sample(mn):
 
 
 def test_to_uncertainties(mn):
-
     # TODO: remove warning filter when this is resolved:
     # https://github.com/lebigot/uncertainties/pull/88
     with warnings.catch_warnings():

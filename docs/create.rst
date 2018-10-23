@@ -48,9 +48,9 @@ Estimating the multivariate normal distribution from samples well
 can be difficult, there are many methods with different trade-offs.
 We recommend using a different package for this task, e.g. `sklearn.covariance`_.
 
-That said, there is a method `Multinorm.from_points` that calls `numpy.std`
-to compute the mean vector, and `numpy.cov` to compute what's sometimes called
-the "naive" multivariate normal estimate.
+That said, there is a method `Multinorm.from_points` that calls :func:`numpy.std`
+to compute the mean vector, and :func:`numpy.cov` to compute what's sometimes called
+the "empirical" multivariate normal estimate.
 
 Points should always be given as 2-dimensional arrays with shape ``(n_dim, n_points)``.
 
