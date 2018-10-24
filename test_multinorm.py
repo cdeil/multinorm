@@ -9,7 +9,7 @@ from multinorm import MultiNorm, Parameter
 
 
 @pytest.fixture()
-def mn():
+def mn1():
     """Example test case without correlations."""
     mean = [10, 20, 30]
     covariance = [[1, 0, 0], [0, 4, 0], [0, 0, 9]]
@@ -61,16 +61,16 @@ def test_init_singular():
     assert_allclose(mn.cov, cov)
 
 
-def test_repr(mn):
-    assert repr(mn) == "MultiNorm(n=3)"
+def test_repr(mn1):
+    assert repr(mn1) == "MultiNorm(n=3)"
 
 
-def test_str(mn):
-    assert "MultiNorm" in str(mn)
+def test_str(mn1):
+    assert "MultiNorm" in str(mn1)
 
 
-def test_getitem(mn):
-    par = mn["c"]
+def test_getitem(mn1):
+    par = mn1["c"]
 
     assert isinstance(par, Parameter)
     assert par.index == 2
@@ -80,18 +80,18 @@ def test_getitem(mn):
     assert repr(par) == "Parameter(index=2, name='c')"
 
 
-def test_err(mn):
-    assert_allclose(mn.err, [1, 2, 3])
+def test_err(mn1):
+    assert_allclose(mn1.err, [1, 2, 3])
 
 
-def test_correlation(mn):
+def test_correlation(mn1):
     expected = np.eye(3)
-    assert_allclose(mn.correlation, expected)
+    assert_allclose(mn1.correlation, expected)
 
 
-def test_precision(mn):
+def test_precision(mn1):
     expected = np.diag([1, 1 / 4, 1 / 9])
-    assert_allclose(mn.precision, expected)
+    assert_allclose(mn1.precision, expected)
 
 
 def test_from_err():
@@ -125,71 +125,71 @@ def test_from_product():
     assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
 
-def test_marginal(mn):
-    mn2 = mn.marginal([0, 2])
+def test_marginal(mn1):
+    mn2 = mn1.marginal([0, 2])
     assert mn2.names == ["a", "c"]
     assert_allclose(mn2.mean, [10, 30])
     assert_allclose(mn2.err, [1, 3])
 
 
-def test_conditional(mn):
-    mn2 = mn.conditional(1, 20)
+def test_conditional(mn1):
+    mn2 = mn1.conditional(1, 20)
     assert mn2.names == ["a", "c"]
     assert_allclose(mn2.mean, [10, 30])
     assert_allclose(mn2.err, [1, 3])
 
 
-def test_fix(mn):
-    mn2 = mn.fix(1)
+def test_fix(mn1):
+    mn2 = mn1.fix(1)
     assert mn2.names == ["a", "c"]
     assert_allclose(mn2.mean, [10, 30])
     assert_allclose(mn2.err, [1, 3])
 
 
-def test_sigma_distance(mn):
-    d = mn.sigma_distance([10, 20, 30])
+def test_sigma_distance(mn1):
+    d = mn1.sigma_distance([10, 20, 30])
     assert_allclose(d, 0)
 
-    d = mn.sigma_distance([10, 20, 33])
+    d = mn1.sigma_distance([10, 20, 33])
     assert_allclose(d, 1)
 
 
-def test_pdf(mn):
-    res = mn.pdf([[10, 20, 30]])
+def test_pdf(mn1):
+    res = mn1.pdf([[10, 20, 30]])
     assert_allclose(res, 0.010582272655706831)
 
 
-def test_logpdf(mn):
-    res = mn.logpdf([[10, 20, 30]])
+def test_logpdf(mn1):
+    res = mn1.logpdf([[10, 20, 30]])
     assert_allclose(res, -4.548575068842073)
 
 
-def test_sample(mn):
-    res = mn.sample(size=1, random_state=0)
+def test_sample(mn1):
+    res = mn1.sample(size=1, random_state=0)
     assert_allclose(res, [10.978738, 20.800314, 35.292157])
 
 
-def test_pandas_summary(mn):
-    df = mn.pandas_summary
+def test_pandas_summary(mn1):
+    df = mn1.pandas_summary
     # TODO: add asserts
 
 
-def test_pandas_cov(mn):
-    df = mn.pandas_cov
+def test_pandas_cov(mn1):
+    df = mn1.pandas_cov
     # TODO: add asserts
 
 
-def test_pandas_correlation(mn):
-    df = mn.pandas_correlation
+def test_pandas_correlation(mn1):
+    df = mn1.pandas_correlation
     # TODO: add asserts
 
 
-def test_to_uncertainties(mn):
+def test_to_uncertainties(mn1):
     # TODO: remove warning filter when this is resolved:
     # https://github.com/lebigot/uncertainties/pull/88
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        res = mn.to_uncertainties()
+        res = mn1.to_uncertainties()
 
     assert isinstance(res, tuple)
     assert len(res) == 3
@@ -203,8 +203,8 @@ def test_to_uncertainties(mn):
     assert_allclose(c.std_dev, 3)
 
 
-def test_to_matplotlib_ellipse(mn):
-    ellipse = mn.marginal(["a", "b"]).to_matplotlib_ellipse()
+def test_to_matplotlib_ellipse(mn1):
+    ellipse = mn1.marginal(["a", "b"]).to_matplotlib_ellipse()
     assert_allclose(ellipse.center, (10, 20))
     assert_allclose(ellipse.width, 2)
     assert_allclose(ellipse.height, 4)
