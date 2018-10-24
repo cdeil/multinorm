@@ -72,9 +72,8 @@ class MultiNorm(object):
 
         return s
 
-    # TODO: add `corr=None` option to optionally set correlations
     @classmethod
-    def from_err(cls, mean=None, err=None, names=None):
+    def from_err(cls, mean=None, err=None, correlation=None, names=None):
         r"""Create `MultiNorm` from parameter errors.
 
         With errors :math:`\sigma_i` this will create a
@@ -82,9 +81,33 @@ class MultiNorm(object):
 
         .. math::
             \Sigma_{ii} = \sigma_i^2
+
+        For a given ``correlation``, or in general: this will create
+        a `MultiNormal` with a covariance matrix such that it's
+        ``err`` and ``correlation`` match the one specified here
+        (up to rounding errors).
+
+        Parameters
+        ----------
+        mean : numpy.ndarray
+            Mean vector
+        err : numpy.ndarray
+            Error vector
+        correlation : numpy.ndarray
+            Correlation matrix
+        names : list
+            Parameter names
         """
         err = np.asarray(err, dtype=float)
-        cov = np.diag(np.power(err, 2))
+        n = len(err)
+
+        if correlation:
+            correlation = np.asarray(correlation, dtype=float)
+        else:
+            correlation = np.eye(n)
+
+        cov = correlation * np.outer(err, err)
+
         return cls(mean, cov, names)
 
     @classmethod

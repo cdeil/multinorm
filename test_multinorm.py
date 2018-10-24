@@ -84,8 +84,9 @@ def test_getitem(mn1):
     assert repr(par) == "Parameter(index=2, name='c')"
 
 
-def test_err(mn1):
+def test_err(mn1, mn2):
     assert_allclose(mn1.err, [1, 2, 3])
+    assert_allclose(mn2.err, [1.0, 2.23606798, 1.73205081])
 
 
 def test_correlation(mn1, mn2):
@@ -111,13 +112,20 @@ def test_precision(mn1, mn2):
 
 
 def test_from_err():
+    # Test with default: no correlation
     mean = [10, 20, 30]
     err = [1, 2, 3]
+    correlation = None
     names = ["a", "b", "c"]
-    mn = MultiNorm.from_err(mean, err, names)
+    mn = MultiNorm.from_err(mean, err, correlation, names)
     assert_allclose(mn.mean, mean)
-    assert_allclose(mn.err, err)
+    assert_allclose(mn.cov, [[1, 0, 0], [0, 4, 0], [0, 0, 9]])
     assert mn.names == names
+
+    # Test with given correlation
+    correlation = [[1, 0.8, 0], [0.8, 1, 0.1], [0.0, 0.1, 1]]
+    mn = MultiNorm.from_err(err=err, correlation=correlation)
+    assert_allclose(mn.correlation, correlation)
 
 
 def test_from_points():
