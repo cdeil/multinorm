@@ -129,8 +129,7 @@ class MultiNorm(object):
 
         precisions = [_.precision for _ in distributions]
         precision = np.sum(precisions, axis=0)
-        # TODO: is there a better (faster or more accurate) way to compute `cov`?
-        cov = np.linalg.inv(precision)
+        cov = cls._cov_from_precision(precision)
 
         means_weighted = [_._mean_weighted for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
@@ -144,6 +143,36 @@ class MultiNorm(object):
         A cached property. Used for many computations internally.
         """
         return self._scipy
+
+    @property
+    def pandas_summary(self):
+        """Summary table (`pandas.DataFrame`).
+
+        TODO: choose a good name for this
+        TODO: document or link to docs
+        """
+        import pandas as pd
+
+        data = {"mean": self.mean, "err": self.err}
+        index = pd.Index(self.names, name='name')
+        return pd.DataFrame(data, index)
+
+    @property
+    def pandas_cov(self):
+        """Covariance matrix (`pandas.DataFrame`)."""
+        return self._pandas_matrix(self.cov)
+
+    @property
+    def pandas_correlation(self):
+        """Correlation matrix (`pandas.DataFrame`)."""
+        return self._pandas_matrix(self.correlation)
+
+    def _pandas_matrix(self, matrix):
+        import pandas as pd
+
+        index = pd.Index(self.names, name='name')
+        columns = pd.Index(self.names, name='name')
+        return pd.DataFrame(matrix, index, columns)
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
@@ -192,6 +221,11 @@ class MultiNorm(object):
         # TODO: can we replace this with something from `self.scipy.cov_info`?
         return np.linalg.eigh(self.cov)
 
+    @staticmethod
+    def _cov_from_precision(precision):
+        # TODO: is there a better (faster or more accurate) way to compute `cov`?
+        return np.linalg.inv(precision)
+
     @property
     def _mean_weighted(self):
         return np.dot(self.precision, self.mean)
@@ -225,10 +259,10 @@ class MultiNorm(object):
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        if 'err' not in self._cache:
-            self._cache['err'] = np.sqrt(np.diag(self.cov))
+        if "err" not in self._cache:
+            self._cache["err"] = np.sqrt(np.diag(self.cov))
 
-        return self._cache['err']
+        return self._cache["err"]
 
     @property
     def correlation(self):
@@ -239,11 +273,11 @@ class MultiNorm(object):
         .. math::
             C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
         """
-        if 'correlation' not in self._cache:
+        if "correlation" not in self._cache:
             c = self.cov / np.outer(self.err, self.err)
-            self._cache['correlation'] = c
+            self._cache["correlation"] = c
 
-        return self._cache['correlation']
+        return self._cache["correlation"]
 
     @property
     def precision(self):
@@ -270,10 +304,11 @@ class MultiNorm(object):
         MultiNorm
             Marginal distribution
         """
-        idx = self._name_index._pars_to_idx(pars)
-        mean = self.mean[idx]
-        cov = self.cov[np.ix_(idx, idx)]
-        names = [self.names[_] for _ in idx]
+        mask = self._name_index.get_mask(pars)
+        names = self._name_index.get_names(mask)
+
+        mean = self.mean[mask]
+        cov = self.cov[np.ix_(mask, mask)]
         return self.__class__(mean, cov, names)
 
     def conditional(self, pars, values):
@@ -302,25 +337,44 @@ class MultiNorm(object):
         # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
         # - "2" refers to the fixed parameters
         # - "1" refers to the remaining (kept) parameters
-        idx2 = self._name_index._pars_to_idx(pars)
-        idx1 = np.setdiff1d(np.arange(self.n), idx2)
+        mask2 = self._name_index.get_mask(pars)
+        mask1 = np.invert(mask2)
+
+        names = self._name_index.get_names(mask1)
 
         values = np.asarray(values, dtype=float)
 
-        mean1 = self.mean[idx1]
-        mean2 = self.mean[idx2]
-        names = [self.names[_] for _ in idx1]
+        mean1 = self.mean[mask1]
+        mean2 = self.mean[mask2]
 
-        cov11 = self.cov[np.ix_(idx1, idx1)]
-        cov12 = self.cov[np.ix_(idx1, idx2)]
-        cov21 = self.cov[np.ix_(idx2, idx1)]
-        cov22 = self.cov[np.ix_(idx2, idx2)]
+        cov11 = self.cov[np.ix_(mask1, mask1)]
+        cov12 = self.cov[np.ix_(mask1, mask2)]
+        cov21 = self.cov[np.ix_(mask2, mask1)]
+        cov22 = self.cov[np.ix_(mask2, mask2)]
 
         # TODO: would it be better to compute the inverse of cov22
         # instead of calling solve twice?
         mean = mean1 + np.dot(cov12, np.linalg.solve(cov22, values - mean2))
         cov = cov11 - np.dot(cov12, np.linalg.solve(cov22, cov21))
 
+        return self.__class__(mean, cov, names)
+
+    def fix(self, pars):
+        """Fix some parameters.
+
+        TODO: Does this result in the same cov matrix as conditional?
+        It's a very different computation. Should we offer both?
+
+        This method is used e.g. in MINUIT, see Section 1.3.1 here:
+        http://lmu.web.psi.ch/docu/manuals/software_manuals/minuit2/mnerror.pdf
+        """
+        # mask of parameters to keep (that are not fixed)
+        mask = np.invert(self._name_index.get_mask(pars))
+        names = self._name_index.get_names(mask)
+
+        mean = self.mean[mask]
+        precision = self.precision[np.ix_(mask, mask)]
+        cov = self._cov_from_precision(precision)
         return self.__class__(mean, cov, names)
 
     def sigma_distance(self, point):
@@ -356,7 +410,7 @@ class MultiNorm(object):
         return self.scipy.rvs(size, random_state)
 
     def __getitem__(self, par):
-        idx = self._name_index._pars_to_idx(par)[0]
+        idx = self._name_index.get_idx(par)[0]
         return Parameter(idx, self)
 
 
@@ -373,7 +427,7 @@ class Parameter(object):
         self._multi_norm = multi_norm
 
     def __repr__(self):
-        return 'Parameter(index={!r}, name={!r})'.format(self.index, self.name)
+        return "Parameter(index={!r}, name={!r})".format(self.index, self.name)
 
     @property
     def index(self):
@@ -411,7 +465,11 @@ class _NameIndex(object):
 
         self.names = names
 
-    def _pars_to_idx(self, pars):
+    @property
+    def n(self):
+        return len(self.names)
+
+    def get_idx(self, pars):
         """Create parameter index array.
 
         Supports scalar, list and array input pars
@@ -435,3 +493,15 @@ class _NameIndex(object):
                 raise TypeError()
 
         return np.asarray(idxs, dtype=int)
+
+    def get_mask(self, pars):
+        idx = self.get_idx(pars)
+        mask = np.zeros(self.n, dtype=bool)
+        mask[idx] = True
+        return mask
+
+    def get_names(self, selection):
+        # This works for an index array or mask for the selection
+        return list(np.array(self.names)[selection])
+        # See https://docs.python.org/3.1/library/itertools.html#itertools.compress
+        # return [d for d, s in zip(self.names, mask) if s]

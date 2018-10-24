@@ -105,7 +105,7 @@ To make a release for this package, follow the following steps
 #. check via ``git tag`` or at https://pypi.org/project/multinorm what the next version should be
 #. ``git clean -fdx``
 #. ``git tag v0.1`` (substitute actual version number here and in the following steps)
-#. ``python setup.py sdist``
+#. ``python setup.py build sdist``
 #. check the package in ``dist`` (should automate somehow)
 #.  ``twine upload dist/*``
 #. ``git push --tags``

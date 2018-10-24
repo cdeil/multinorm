@@ -53,11 +53,11 @@ def test_str(mn):
 
 
 def test_getitem(mn):
-    par = mn['c']
+    par = mn["c"]
 
     assert isinstance(par, Parameter)
     assert par.index == 2
-    assert par.name == 'c'
+    assert par.name == "c"
     assert_allclose(par.mean, 30)
     assert_allclose(par.err, 3)
     assert repr(par) == "Parameter(index=2, name='c')"
@@ -91,7 +91,6 @@ def test_from_points():
     points = [(10, 20, 30), (12, 20, 30)]
     names = ["a", "b", "c"]
     mn = MultiNorm.from_points(points, names)
-    print(mn)
 
     assert mn.names == names
     assert_allclose(mn.mean, [11, 20, 30])
@@ -123,6 +122,13 @@ def test_conditional(mn):
     assert_allclose(mn2.err, [1, 3])
 
 
+def test_fix(mn):
+    mn2 = mn.fix(1)
+    assert mn2.names == ["a", "c"]
+    assert_allclose(mn2.mean, [10, 30])
+    assert_allclose(mn2.err, [1, 3])
+
+
 def test_sigma_distance(mn):
     d = mn.sigma_distance([10, 20, 30])
     assert_allclose(d, 0)
@@ -144,6 +150,21 @@ def test_logpdf(mn):
 def test_sample(mn):
     res = mn.sample(size=1, random_state=0)
     assert_allclose(res, [10.978738, 20.800314, 35.292157])
+
+
+def test_pandas_summary(mn):
+    df = mn.pandas_summary
+    # TODO: add asserts
+
+
+def test_pandas_cov(mn):
+    df = mn.pandas_cov
+    # TODO: add asserts
+
+
+def test_pandas_correlation(mn):
+    df = mn.pandas_correlation
+    # TODO: add asserts
 
 
 def test_to_uncertainties(mn):
