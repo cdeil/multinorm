@@ -10,11 +10,28 @@ from multinorm import MultiNorm, Parameter
 
 @pytest.fixture()
 def mn():
-    """A simple test case."""
+    """Example test case without correlations."""
     mean = [10, 20, 30]
     covariance = [[1, 0, 0], [0, 4, 0], [0, 0, 9]]
     names = ["a", "b", "c"]
     return MultiNorm(mean, covariance, names)
+
+
+@pytest.fixture()
+def mn2():
+    """Example test case with correlations.
+
+    These are pretty much arbitrary numbers,
+    when used in tests outputs will only establish
+    current behaviour or allow testing against other codes.
+
+    This is the same test case as used in scipy here:
+    https://github.com/scipy/scipy/blob/23a648dd5a99de93901abb431885948cd4df14ff/scipy/stats/tests/test_multivariate.py#L349-L350
+    """
+    mean = [1, 3, 2]
+    cov = [[1, 2, 0], [2, 5, 0.5], [0, 0.5, 3]]
+    names = ["a", "b", "c"]
+    return MultiNorm(mean, cov, names)
 
 
 def test_init():

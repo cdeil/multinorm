@@ -154,7 +154,7 @@ class MultiNorm(object):
         import pandas as pd
 
         data = {"mean": self.mean, "err": self.err}
-        index = pd.Index(self.names, name='name')
+        index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
 
     @property
@@ -170,8 +170,8 @@ class MultiNorm(object):
     def _pandas_matrix(self, matrix):
         import pandas as pd
 
-        index = pd.Index(self.names, name='name')
-        columns = pd.Index(self.names, name='name')
+        index = pd.Index(self.names, name="name")
+        columns = pd.Index(self.names, name="name")
         return pd.DataFrame(matrix, index, columns)
 
     def to_uncertainties(self):
