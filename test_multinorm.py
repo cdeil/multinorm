@@ -21,6 +21,10 @@ def mn1():
 def mn2():
     """Example test case with correlations.
 
+    - [0, 1] = ["a", "b"] correlation: 0.89442719 (large correlation)
+    - [0, 2] = ["a", "c"] correlation: 0.0 (uncorrelated)
+    - [1, 2] = ["b", "c"] correlation: 0.12909944 (small correlation)
+
     These are pretty much arbitrary numbers,
     when used in tests outputs will only establish
     current behaviour or allow testing against other codes.
@@ -84,14 +88,26 @@ def test_err(mn1):
     assert_allclose(mn1.err, [1, 2, 3])
 
 
-def test_correlation(mn1):
+def test_correlation(mn1, mn2):
     expected = np.eye(3)
     assert_allclose(mn1.correlation, expected)
 
+    c = mn2.correlation
+    assert_allclose(c[0, 1], 0.89442719)
+    assert_allclose(c[0, 2], 0)
+    assert_allclose(c[1, 2], 0.12909944)
 
-def test_precision(mn1):
+
+def test_precision(mn1, mn2):
     expected = np.diag([1, 1 / 4, 1 / 9])
     assert_allclose(mn1.precision, expected)
+
+    expected = [
+        [5.36363636, -2.18181818, 0.36363636],
+        [-2.18181818, 1.09090909, -0.18181818],
+        [0.36363636, -0.18181818, 0.36363636],
+    ]
+    assert_allclose(mn2.precision, expected)
 
 
 def test_from_err():
@@ -115,35 +131,56 @@ def test_from_points():
 
 
 def test_from_product():
-    mn1 = MultiNorm(mean=[0, 0], names=["a", "b"])
-    mn2 = MultiNorm(mean=[2, 4], names=["a", "b"])
+    d1 = MultiNorm(mean=[0, 0], names=["a", "b"])
+    d2 = MultiNorm(mean=[2, 4], names=["a", "b"])
 
-    mn = MultiNorm.from_product([mn1, mn2])
+    mn = MultiNorm.from_product([d1, d2])
 
     assert mn.names == ["a", "b"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
 
-def test_marginal(mn1):
-    mn2 = mn1.marginal([0, 2])
-    assert mn2.names == ["a", "c"]
-    assert_allclose(mn2.mean, [10, 30])
-    assert_allclose(mn2.err, [1, 3])
+def test_marginal(mn1, mn2):
+    # Marginal distribution: subset of `cov`
+    mn = mn1.marginal([0, 2])
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [10, 30])
+    assert_allclose(mn.cov, [[1, 0], [0, 9]])
+
+    mn = mn2.marginal([0, 2])
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [1, 2])
+    assert_allclose(mn.cov, [[1, 0], [0, 3]])
 
 
-def test_conditional(mn1):
-    mn2 = mn1.conditional(1, 20)
-    assert mn2.names == ["a", "c"]
-    assert_allclose(mn2.mean, [10, 30])
-    assert_allclose(mn2.err, [1, 3])
+def test_conditional(mn1, mn2):
+    mn = mn1.conditional(1, 20)
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [10, 30])
+    assert_allclose(mn.cov, [[1, 0], [0, 9]])
+
+    mn = mn2.conditional(1, 3)
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [1, 2])
+    assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
 
 
-def test_fix(mn1):
-    mn2 = mn1.fix(1)
-    assert mn2.names == ["a", "c"]
-    assert_allclose(mn2.mean, [10, 30])
-    assert_allclose(mn2.err, [1, 3])
+def test_fix(mn1, mn2):
+    # Fix parameter: subset of `precision`
+    mn = mn1.fix(1)
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [10, 30])
+    assert_allclose(mn.cov, [[1, 0], [0, 9]])
+
+    mn = mn2.fix(1)
+    assert mn.names == ["a", "c"]
+    assert_allclose(mn.mean, [1, 2])
+    assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
+
+    expected = [[5.363636, 0.363636], [0.363636, 0.363636]]
+    assert_allclose(mn2.precision[np.ix_([0, 2], [0, 2])], expected, atol=1e-5)
+    assert_allclose(mn.precision, expected, atol=1e-5)
 
 
 def test_sigma_distance(mn1):
