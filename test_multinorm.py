@@ -149,6 +149,13 @@ def test_from_product():
     assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
 
+def test_make_example():
+    mn = MultiNorm.make_example(n_par=2, n_fix=1, random_state=0)
+    assert_allclose(mn.mean, [1.76405235, 0.40015721, 0.97873798])
+    expected = [[8.50937518, -0.41563014, 0], [-0.41563014, 1.85774006, 0], [0, 0, 0]]
+    assert_allclose(mn.cov, expected)
+
+
 def test_marginal(mn1, mn2):
     # Marginal distribution: subset of `cov`
     mn = mn1.marginal([0, 2])

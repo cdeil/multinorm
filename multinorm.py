@@ -101,10 +101,10 @@ class MultiNorm(object):
         err = np.asarray(err, dtype=float)
         n = len(err)
 
-        if correlation:
-            correlation = np.asarray(correlation, dtype=float)
-        else:
+        if correlation is None:
             correlation = np.eye(n)
+        else:
+            correlation = np.asarray(correlation, dtype=float)
 
         cov = correlation * np.outer(err, err)
 
@@ -158,6 +158,38 @@ class MultiNorm(object):
         means_weighted = np.sum(means_weighted, axis=0)
         mean = np.dot(cov, means_weighted)
         return cls(mean, cov, names)
+
+    @classmethod
+    def make_example(cls, n_par, n_fix=0, random_state=None):
+        """Create example `MultiNorm` for testing.
+
+        This is a factory method that allows the quick creation
+        of example `MultiNormal` with any number of parameters for testing.
+
+        See: :ref:`create_make_example`.
+
+        Parameters
+        ----------
+        n_par : int
+            Number of parameters
+        n_fix : int
+            Number of fixed parameters
+            in addition to ``n_par``.
+        random_state :
+            Seed (int), or ``None`` to choose random seed.
+            Can also pass `numpy.random.RandomState` object.
+        """
+        n = n_par + n_fix
+        rng = np.random.RandomState(random_state)
+        mean = rng.normal(size=n)
+
+        s = rng.normal(size=(n_par, n_par))
+        cov1 = np.dot(s, s.T)
+
+        cov2 = np.zeros((n, n))
+        cov2[:n_par, :n_par] = cov1
+
+        return cls(mean, cov2)
 
     @property
     def scipy(self):
