@@ -31,8 +31,15 @@ to obtain a best-fit parameter vector and covariance matrix.
 
 Let's use `scipy.optimize_curve_fit`_ to fit some data.
 
-
 TODO: show example using iminuit
+
+http://www.statsmodels.org/devel/examples/notebooks/generated/chi2_fitting.html
+https://github.com/cdeil/pyfit/blob/master/fitting_tutorial/src/tests/chi2_example.py
+https://lmfit.github.io
+https://iminuit.readthedocs.io
+https://sherpa.readthedocs.io
+
+
 
 .. _create_from_points:
 

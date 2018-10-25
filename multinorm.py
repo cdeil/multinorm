@@ -12,6 +12,8 @@ A Python class to work with model fit results
 from __future__ import division
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
+import pandas as pd
+from scipy.linalg import pinvh
 from scipy.stats import multivariate_normal
 
 __all__ = ["MultiNorm"]
@@ -57,23 +59,8 @@ class MultiNorm(object):
         self._cache = {}
 
     def __repr__(self):
-        return "{}(n={})".format(self.__class__.__name__, self.n)
-
-    def __str__(self):
-        s = repr(self)
-
-        s += "\nnames: "
-        s += str(self.names)
-
-        s += "\nmean: "
-        s += str(self.mean)
-
-        s += "\nerr: "
-        s += str(self.err)
-
-        s += "\ncov:\n"
-        s += str(self.cov)
-
+        s = "{} with n={} parameters:\n".format(self.__class__.__name__, self.n)
+        s += str(self.parameters)
         return s
 
     @classmethod
@@ -154,9 +141,9 @@ class MultiNorm(object):
         """
         names = distributions[0].names
 
-        precisions = [_.precision for _ in distributions]
+        precisions = [_.precision.values for _ in distributions]
         precision = np.sum(precisions, axis=0)
-        cov = cls._cov_from_precision(precision)
+        cov = pinvh(precision)
 
         means_weighted = [_._mean_weighted for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
@@ -164,7 +151,7 @@ class MultiNorm(object):
         return cls(mean, cov, names)
 
     @classmethod
-    def make_example(cls, n_par, n_fix=0, random_state=None):
+    def make_example(cls, n_par=3, n_fix=0, random_state=42):
         """Create example `MultiNorm` for testing.
 
         This is a factory method that allows the quick creation
@@ -180,7 +167,8 @@ class MultiNorm(object):
             Number of fixed parameters
             in addition to ``n_par``.
         random_state :
-            Seed (int), or ``None`` to choose random seed.
+            Seed (int) - default: 42
+            Put ``None`` to choose random seed.
             Can also pass `numpy.random.RandomState` object.
         """
         n = n_par + n_fix
@@ -204,31 +192,20 @@ class MultiNorm(object):
         return self._scipy
 
     @property
-    def pandas_summary(self):
-        """Summary table (`pandas.DataFrame`).
+    def parameters(self):
+        """Parameter table (`pandas.DataFrame`).
 
-        TODO: choose a good name for this
-        TODO: document or link to docs
+        Index is "name", columns are "mean" and "err"
         """
-        import pandas as pd
-
         data = {"mean": self.mean, "err": self.err}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
 
-    @property
-    def pandas_cov(self):
-        """Covariance matrix (`pandas.DataFrame`)."""
-        return self._pandas_matrix(self.cov)
-
-    @property
-    def pandas_correlation(self):
-        """Correlation matrix (`pandas.DataFrame`)."""
-        return self._pandas_matrix(self.correlation)
+    def _pandas_series(self, data, name):
+        index = pd.Index(self.names, name="name")
+        return pd.Series(data, index, name=name)
 
     def _pandas_matrix(self, matrix):
-        import pandas as pd
-
         index = pd.Index(self.names, name="name")
         columns = pd.Index(self.names, name="name")
         return pd.DataFrame(matrix, index, columns)
@@ -246,7 +223,7 @@ class MultiNorm(object):
         """
         from uncertainties import correlated_values
 
-        return correlated_values(self.mean, self.cov)
+        return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
 
     def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
         """Create `matplotlib.patches.Ellipse`_.
@@ -267,7 +244,7 @@ class MultiNorm(object):
         from matplotlib.patches import Ellipse
 
         # See https://stackoverflow.com/questions/12301071
-        xy = self.mean
+        xy = self.scipy.mean
 
         vals, vecs = self._eigh
         width, height = 2 * n_sigma * np.sqrt(vals)
@@ -277,17 +254,13 @@ class MultiNorm(object):
 
     @property
     def _eigh(self):
-        # TODO: can we replace this with something from `self.scipy.cov_info`?
+        # TODO: can this be computed from `self.scipy.cov_info.U`?
+        # TODO: expose covar eigenvalues and vectors?
         return np.linalg.eigh(self.cov)
-
-    @staticmethod
-    def _cov_from_precision(precision):
-        # TODO: is there a better (faster or more accurate) way to compute `cov`?
-        return np.linalg.inv(precision)
 
     @property
     def _mean_weighted(self):
-        return np.dot(self.precision, self.mean)
+        return np.dot(self.precision.values, self.mean.values)
 
     @property
     def n(self):
@@ -299,14 +272,15 @@ class MultiNorm(object):
 
     @property
     def mean(self):
-        """Mean vector (`numpy.ndarray`)."""
-        return self.scipy.mean
+        """Mean vector (`pandas.Series`)."""
+        return self._pandas_series(self.scipy.mean, "mean")
 
     @property
     def cov(self):
-        """Covariance matrix (`numpy.ndarray`)."""
-        return self.scipy.cov
+        """Covariance matrix (:class:`pandas.DataFrame`)."""
+        return self._pandas_matrix(self.scipy.cov)
 
+    # TODO: probably should make this a pandas Index.
     @property
     def names(self):
         """Parameter names (`list` of `str`)."""
@@ -314,18 +288,19 @@ class MultiNorm(object):
 
     @property
     def err(self):
-        r"""Error vector (`numpy.ndarray`).
+        r"""Error vector (`pandas.DataFrame`).
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
         if "err" not in self._cache:
-            self._cache["err"] = np.sqrt(np.diag(self.cov))
+            err = np.sqrt(np.diag(self.cov))
+            self._cache["err"] = self._pandas_series(err, "err")
 
         return self._cache["err"]
 
     @property
     def correlation(self):
-        r"""Correlation matrix (:class:`numpy.ndarray`).
+        r"""Correlation matrix (`pandas.DataFrame`).
 
         Correlation :math:`C` is related to covariance :math:`\Sigma` via:
 
@@ -334,19 +309,23 @@ class MultiNorm(object):
         """
         if "correlation" not in self._cache:
             c = self.cov / np.outer(self.err, self.err)
-            self._cache["correlation"] = c
+            self._cache["correlation"] = self._pandas_matrix(c)
 
         return self._cache["correlation"]
 
     @property
     def precision(self):
-        """Precision matrix (`numpy.ndarray`).
+        """Precision matrix (`pandas.DataFrame`).
 
         The inverse of the covariance matrix.
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        return self.scipy.cov_info.pinv
+        if "precision" not in self._cache:
+            matrix = self.scipy.cov_info.pinv
+            self._cache["precision"] = self._pandas_matrix(matrix)
+
+        return self._cache["precision"]
 
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
@@ -366,8 +345,8 @@ class MultiNorm(object):
         mask = self._name_index.get_mask(pars)
         names = self._name_index.get_names(mask)
 
-        mean = self.mean[mask]
-        cov = self.cov[np.ix_(mask, mask)]
+        mean = self.scipy.mean[mask]
+        cov = self.scipy.cov[np.ix_(mask, mask)]
         return self.__class__(mean, cov, names)
 
     def conditional(self, pars, values=None):
@@ -403,17 +382,17 @@ class MultiNorm(object):
         names = self._name_index.get_names(mask1)
 
         if values is None:
-            values = self.mean[mask2]
+            values = self.scipy.mean[mask2]
         else:
             values = np.asarray(values, dtype=float)
 
-        mean1 = self.mean[mask1]
-        mean2 = self.mean[mask2]
+        mean1 = self.scipy.mean[mask1]
+        mean2 = self.scipy.mean[mask2]
 
-        cov11 = self.cov[np.ix_(mask1, mask1)]
-        cov12 = self.cov[np.ix_(mask1, mask2)]
-        cov21 = self.cov[np.ix_(mask2, mask1)]
-        cov22 = self.cov[np.ix_(mask2, mask2)]
+        cov11 = self.scipy.cov[np.ix_(mask1, mask1)]
+        cov12 = self.scipy.cov[np.ix_(mask1, mask2)]
+        cov21 = self.scipy.cov[np.ix_(mask2, mask1)]
+        cov22 = self.scipy.cov[np.ix_(mask2, mask2)]
 
         # TODO: would it be better to compute the inverse of cov22
         # instead of calling solve twice?
@@ -436,9 +415,9 @@ class MultiNorm(object):
         mask = np.invert(self._name_index.get_mask(pars))
         names = self._name_index.get_names(mask)
 
-        mean = self.mean[mask]
-        precision = self.precision[np.ix_(mask, mask)]
-        cov = self._cov_from_precision(precision)
+        mean = self.scipy.mean[mask]
+        precision = self.scipy.cov_info.pinv[np.ix_(mask, mask)]
+        cov = pinvh(precision)
         return self.__class__(mean, cov, names)
 
     def sigma_distance(self, point):
@@ -473,51 +452,13 @@ class MultiNorm(object):
         """
         return self.scipy.rvs(size, random_state)
 
-    def __getitem__(self, par):
-        idx = self._name_index.get_idx(par)[0]
-        return Parameter(idx, self)
 
-
-class Parameter(object):
-    """Parameter information.
-
-    Proxy object to MultiNorm.
-
-    TODO: should we instead pre-compute and cover everything over?
-    """
-
-    def __init__(self, index, multi_norm):
-        self._index = index
-        self._multi_norm = multi_norm
-
-    def __repr__(self):
-        return "Parameter(index={!r}, name={!r})".format(self.index, self.name)
-
-    @property
-    def index(self):
-        return self._index
-
-    @property
-    def name(self):
-        return self._multi_norm.names[self.index]
-
-    @property
-    def mean(self):
-        return self._multi_norm.mean[self.index]
-
-    @property
-    def err(self):
-        return self._multi_norm.err[self.index]
-
-
+# TODO: remove, use pandas Index instead somehow
 class _NameIndex(object):
     """Parameter index.
 
     Doesn't do much, just store parameter names
     and match parameter names and indices.
-
-    If we go all-in on pandas, we could use a
-    pandas index for this functionality.
     """
 
     def __init__(self, names, n):

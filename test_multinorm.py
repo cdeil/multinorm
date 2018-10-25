@@ -4,8 +4,9 @@ from __future__ import division
 import warnings
 import pytest
 import numpy as np
+import pandas as pd
 from numpy.testing import assert_allclose
-from multinorm import MultiNorm, Parameter
+from multinorm import MultiNorm
 
 
 def assert_multinormal_allclose(a, b):
@@ -73,49 +74,7 @@ def test_init_singular():
 
 
 def test_repr(mn1):
-    assert repr(mn1) == "MultiNorm(n=3)"
-
-
-def test_str(mn1):
     assert "MultiNorm" in str(mn1)
-
-
-def test_getitem(mn1):
-    par = mn1["c"]
-
-    assert isinstance(par, Parameter)
-    assert par.index == 2
-    assert par.name == "c"
-    assert_allclose(par.mean, 30)
-    assert_allclose(par.err, 3)
-    assert repr(par) == "Parameter(index=2, name='c')"
-
-
-def test_err(mn1, mn2):
-    assert_allclose(mn1.err, [1, 2, 3])
-    assert_allclose(mn2.err, [1.0, 2.23606798, 1.73205081])
-
-
-def test_correlation(mn1, mn2):
-    expected = np.eye(3)
-    assert_allclose(mn1.correlation, expected)
-
-    c = mn2.correlation
-    assert_allclose(c[0, 1], 0.89442719)
-    assert_allclose(c[0, 2], 0)
-    assert_allclose(c[1, 2], 0.12909944)
-
-
-def test_precision(mn1, mn2):
-    expected = np.diag([1, 1 / 4, 1 / 9])
-    assert_allclose(mn1.precision, expected)
-
-    expected = [
-        [5.36363636, -2.18181818, 0.36363636],
-        [-2.18181818, 1.09090909, -0.18181818],
-        [0.36363636, -0.18181818, 0.36363636],
-    ]
-    assert_allclose(mn2.precision, expected)
 
 
 def test_from_err():
@@ -163,6 +122,52 @@ def test_make_example():
     assert_allclose(mn.cov, expected)
 
 
+def test_parameters(mn1):
+    df = mn1.parameters
+
+    assert isinstance(df, pd.DataFrame)
+    assert list(df.columns) == ["mean", "err"]
+    assert list(df.index) == ["a", "b", "c"]
+
+    # Access infos per parameter as Series
+    par = df.loc["c"]
+    assert isinstance(par, pd.Series)
+    assert_allclose(par["mean"], 30)
+    assert_allclose(par["err"], 3)
+
+    # Access infos per quantity as Series
+    mean = df["mean"]
+    assert isinstance(mean, pd.Series)
+    assert_allclose(mean["c"], 30)
+
+
+def test_err(mn1, mn2):
+    assert_allclose(mn1.err, [1, 2, 3])
+    assert_allclose(mn2.err, [1.0, 2.23606798, 1.73205081])
+
+
+def test_correlation(mn1, mn2):
+    expected = np.eye(3)
+    assert_allclose(mn1.correlation.values, expected)
+
+    c = mn2.correlation
+    assert_allclose(c.iloc[0, 1], 0.89442719)
+    assert_allclose(c.iloc[0, 2], 0)
+    assert_allclose(c.iloc[1, 2], 0.12909944)
+
+
+def test_precision(mn1, mn2):
+    expected = np.diag([1, 1 / 4, 1 / 9])
+    assert_allclose(mn1.precision, expected)
+
+    expected = [
+        [5.36363636, -2.18181818, 0.36363636],
+        [-2.18181818, 1.09090909, -0.18181818],
+        [0.36363636, -0.18181818, 0.36363636],
+    ]
+    assert_allclose(mn2.precision, expected)
+
+
 def test_marginal(mn1, mn2):
     # Marginal distribution: subset of `cov`
     mn = mn1.marginal([0, 2])
@@ -201,7 +206,6 @@ def test_fix(mn1, mn2):
     assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
 
     expected = [[5.363636, 0.363636], [0.363636, 0.363636]]
-    assert_allclose(mn2.precision[np.ix_([0, 2], [0, 2])], expected, atol=1e-5)
     assert_allclose(mn.precision, expected, atol=1e-5)
 
 
@@ -237,21 +241,6 @@ def test_logpdf(mn1):
 def test_sample(mn1):
     res = mn1.sample(size=1, random_state=0)
     assert_allclose(res, [10.978738, 20.800314, 35.292157])
-
-
-def test_pandas_summary(mn1):
-    df = mn1.pandas_summary
-    # TODO: add asserts
-
-
-def test_pandas_cov(mn1):
-    df = mn1.pandas_cov
-    # TODO: add asserts
-
-
-def test_pandas_correlation(mn1):
-    df = mn1.pandas_correlation
-    # TODO: add asserts
 
 
 def test_to_uncertainties(mn1):
