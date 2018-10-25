@@ -3,6 +3,13 @@
 Install
 =======
 
+This package supports Python 3.6 or later.
+Python 3.5 or 2.7 or older versions are not supported.
+
+There's nothing platform-specific; Linux, MacOS and Windows are supported.
+
+The required dependencies are `numpy`_, `scipy`_ and `pandas`_.
+
 To install ``multinorm`` use pip::
 
     pip install multinorm

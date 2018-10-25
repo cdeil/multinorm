@@ -1,6 +1,5 @@
 """Tests for multinorm, using pyest.
 """
-from __future__ import division
 import warnings
 import pytest
 import numpy as np

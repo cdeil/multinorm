@@ -26,7 +26,6 @@ setup(
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",

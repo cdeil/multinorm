@@ -9,7 +9,6 @@ A Python class to work with model fit results
 - Docs: https://multinorm.readthedocs.io
 - License: BSD-3-Clause
 """
-from __future__ import division
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
 import pandas as pd
@@ -25,7 +24,7 @@ except DistributionNotFound:
     pass
 
 
-class MultiNorm(object):
+class MultiNorm:
     """Multivariate normal distribution.
 
     Given ``n`` parameters, the ``mean`` and ``names``
@@ -207,6 +206,7 @@ class MultiNorm(object):
 
     def _pandas_matrix(self, matrix):
         index = pd.Index(self.names, name="name")
+        # TODO: use `index` twice or make separate `columns` index?
         columns = pd.Index(self.names, name="name")
         return pd.DataFrame(matrix, index, columns)
 
@@ -277,7 +277,7 @@ class MultiNorm(object):
 
     @property
     def cov(self):
-        """Covariance matrix (:class:`pandas.DataFrame`)."""
+        """Covariance matrix (`pandas.DataFrame`)."""
         return self._pandas_matrix(self.scipy.cov)
 
     # TODO: probably should make this a pandas Index.
