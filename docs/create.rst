@@ -48,7 +48,7 @@ Estimating the multivariate normal distribution from samples well
 can be difficult, there are many methods with different trade-offs.
 We recommend using a different package for this task, e.g. `sklearn.covariance`_.
 
-That said, there is a method `Multinorm.from_points` that calls :func:`numpy.std`
+That said, there is a method :meth:`MultiNorm.from_points` that calls :func:`numpy.std`
 to compute the mean vector, and :func:`numpy.cov` to compute what's sometimes called
 the "empirical" multivariate normal estimate.
 
@@ -76,8 +76,16 @@ From publication
 TODO: show example how to take covar (or par errors) from a
 publication or blog post, i.e. as inputs.
 
+.. _create_from_product:
 
 From product
 ------------
 
-TODO: document from_product
+TODO: document :meth:`MultiNorm.from_product`
+
+.. _create_make_example:
+
+Make example
+------------
+
+TODO: document :meth:`MultiNorm.make_example`

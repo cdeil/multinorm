@@ -52,6 +52,22 @@ fixed, and that are kept free.
 The formulae to obtain the mean and covariance of the conditional distribution are given
 `here <https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions>`_.
 
+.. _theory_fix:
+
+Fix parameters
+--------------
+
+This method is used e.g. in MINUIT, see Section 1.3.1 here:
+http://lmu.web.psi.ch/docu/manuals/software_manuals/minuit2/mnerror.pdf
+
+As far as I can tell, it gives the same results as conditional (see `test_conditional_vs_fix`).
+
+TODO: work out the math of why that is the case and document it here.
+
+Add note that for MVN the covar matrix for conditional doesn't depend on parameter values.
+
+TODO: document and make example in the analyse section using iminuit.
+
 .. _theory_product:
 
 Product distribution

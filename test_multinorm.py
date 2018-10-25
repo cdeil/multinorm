@@ -8,6 +8,13 @@ from numpy.testing import assert_allclose
 from multinorm import MultiNorm, Parameter
 
 
+def assert_multinormal_allclose(a, b):
+    """Assert that two `MultiNorm` objects are allclose."""
+    assert a.names == b.names
+    assert_allclose(a.mean, b.mean)
+    assert_allclose(a.cov, b.cov)
+
+
 @pytest.fixture()
 def mn1():
     """Example test case without correlations."""
@@ -196,6 +203,17 @@ def test_fix(mn1, mn2):
     expected = [[5.363636, 0.363636], [0.363636, 0.363636]]
     assert_allclose(mn2.precision[np.ix_([0, 2], [0, 2])], expected, atol=1e-5)
     assert_allclose(mn.precision, expected, atol=1e-5)
+
+
+def test_conditional_vs_fix():
+    # Conditional and fix should be the same (up to numerical errors)
+    n_par = 5
+    mn = MultiNorm.make_example(n_par=n_par)
+
+    a = mn.conditional([1, 2, 3])
+    b = mn.fix([1, 2, 3])
+
+    assert_multinormal_allclose(a, b)
 
 
 def test_sigma_distance(mn1):

@@ -366,7 +366,7 @@ class MultiNorm(object):
         cov = self.cov[np.ix_(mask, mask)]
         return self.__class__(mean, cov, names)
 
-    def conditional(self, pars, values):
+    def conditional(self, pars, values=None):
         """Conditional `MultiNormal` distribution.
 
         Resulting lower-dimensional distribution obtained
@@ -381,7 +381,8 @@ class MultiNorm(object):
         pars : list
             Fixed parameters (indices or names)
         values : list
-            Fixed parameters (values)
+            Fixed parameters (values).
+            Default is to use the values from ``mean``.
 
         Returns
         -------
@@ -397,7 +398,10 @@ class MultiNorm(object):
 
         names = self._name_index.get_names(mask1)
 
-        values = np.asarray(values, dtype=float)
+        if values is None:
+            values = self.mean[mask2]
+        else:
+            values = np.asarray(values, dtype=float)
 
         mean1 = self.mean[mask1]
         mean2 = self.mean[mask2]
@@ -417,11 +421,12 @@ class MultiNorm(object):
     def fix(self, pars):
         """Fix some parameters.
 
-        TODO: Does this result in the same cov matrix as conditional?
-        It's a very different computation. Should we offer both?
+        See :ref:`theory_fix`.
 
-        This method is used e.g. in MINUIT, see Section 1.3.1 here:
-        http://lmu.web.psi.ch/docu/manuals/software_manuals/minuit2/mnerror.pdf
+        Parameters
+        ----------
+        pars : list
+            Parameters to fix (indices or names)
         """
         # mask of parameters to keep (that are not fixed)
         mask = np.invert(self._name_index.get_mask(pars))
