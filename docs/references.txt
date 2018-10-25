@@ -28,5 +28,6 @@
 .. _soerp: https://github.com/tisimst/soerp
 .. _emcee: https://dfm.io/emcee
 .. _pymc: https://docs.pymc.io
+.. _multinorm.ipynb: https://nbviewer.jupyter.org/github/cdeil/multinorm/blob/master/multinorm.ipynb
 
 .. module:: multinorm

@@ -5,6 +5,15 @@
 Getting started
 ===============
 
+.. note::
+
+    For a quick and hands-on introduction, start with the
+    `multinorm.ipynb`_ Jupyter notebook tutorial,
+    then continue reading here.
+
+Import
+------
+
 The `multinorm` package offers a single class :class:`MultiNorm`,
 so you always start like this::
 

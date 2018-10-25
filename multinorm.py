@@ -30,7 +30,11 @@ class MultiNorm(object):
     should be one-dimensional with size ``n``,
     and ``cov`` should be a two-dimensional matrix of shape ``(n, n)``.
 
-    See the documentation.
+    Documentation for this class:
+
+    - Tutorial Jupyter notebook: `multinorm.ipynb`_
+    - Documentation: :ref:`gs`, :ref:`create`, :ref:`analyse`
+    - Equations and statistics: :ref:`theory`
 
     Parameters
     ----------
