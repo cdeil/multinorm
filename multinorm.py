@@ -13,7 +13,7 @@ from pkg_resources import get_distribution, DistributionNotFound
 import functools
 import numpy as np
 import pandas as pd
-from scipy.linalg import pinvh, eigh
+from scipy.linalg import eigh
 from scipy.stats import multivariate_normal
 
 __all__ = ["MultiNorm"]
@@ -40,6 +40,13 @@ def cached_property(fn):
         return getattr(self, attr_name)
 
     return _cached_property
+
+
+def _matrix_inverse(matrix):
+    # np.linalg.inv seems to give numerically stable results
+    # We need inverse in several places, so in case there's
+    # a better option, and to get consistency, we put this wrapper function
+    return np.linalg.inv(matrix)
 
 
 class MultiNorm:
@@ -107,6 +114,12 @@ class MultiNorm:
         names : list
             Parameter names
         """
+        if err is None:
+            if mean is None:
+                raise ValueError('Must give mean or err')
+
+            err = np.ones_like(mean)
+
         err = np.asarray(err, dtype=float)
         n = len(err)
 
@@ -161,7 +174,7 @@ class MultiNorm:
 
         precisions = [_.precision.values for _ in distributions]
         precision = np.sum(precisions, axis=0)
-        cov = pinvh(precision)
+        cov = _matrix_inverse(precision)
 
         means_weighted = [_._mean_weighted for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
@@ -334,7 +347,7 @@ class MultiNorm:
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        matrix = self.scipy.cov_info.pinv
+        matrix = _matrix_inverse(self.scipy.cov)
         return self._pandas_matrix(matrix)
 
     def marginal(self, pars):
@@ -427,7 +440,7 @@ class MultiNorm:
 
         mean = self.scipy.mean[mask]
         precision = self.scipy.cov_info.pinv[np.ix_(mask, mask)]
-        cov = pinvh(precision)
+        cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
     def sigma_distance(self, point):

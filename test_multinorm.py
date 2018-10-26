@@ -45,6 +45,20 @@ def mn2():
     return MultiNorm(mean, cov, names)
 
 
+@pytest.fixture()
+def mn3():
+    """Example test case with very large and small numbers.
+
+    This is numerically challenging for several computations.
+    Ideally all methods in `MultiNorm` should be able to handle
+    this case and give accurate results, because it's quite common.
+    """
+    mean = np.array([1e-10, 1, 1e10])
+    err = 1.0 * mean
+    names = ['a', "b", "c"]
+    return MultiNorm.from_err(mean, err, names=names)
+
+
 def test_init():
     mn = MultiNorm(mean=[1, 2])
     assert mn.names == ["par_0", "par_1"]
@@ -114,6 +128,14 @@ def test_from_product():
     assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
 
+def test_from_product_numerics(mn3):
+    # Check that `from_product` gives good results
+    # even if some parameters are very small and others very large
+    # Product of 10 measurements should reduce variance by factor 10
+    mn = MultiNorm.from_product([mn3] * 10)
+    assert_allclose(mn.cov, np.diag([1e-21, 0.1, 1e19]))
+
+
 def test_make_example():
     mn = MultiNorm.make_example(n_par=2, n_fix=1, random_state=0)
     assert_allclose(mn.mean, [1.76405235, 0.40015721, 0.97873798])
@@ -155,7 +177,7 @@ def test_correlation(mn1, mn2):
     assert_allclose(c.iloc[1, 2], 0.12909944)
 
 
-def test_precision(mn1, mn2):
+def test_precision(mn1, mn2, mn3):
     expected = np.diag([1, 1 / 4, 1 / 9])
     assert_allclose(mn1.precision, expected)
 
@@ -165,6 +187,9 @@ def test_precision(mn1, mn2):
         [0.36363636, -0.18181818, 0.36363636],
     ]
     assert_allclose(mn2.precision, expected)
+
+    expected = np.diag([1e20, 1, 1e-20])
+    assert_allclose(mn3.precision, expected)
 
 
 def test_marginal(mn1, mn2):
