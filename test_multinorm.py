@@ -227,8 +227,7 @@ def test_conditional(mn1, mn2):
     assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
 
 
-def test_fix(mn1, mn2):
-    # Fix parameter: subset of `precision`
+def test_fix(mn1, mn2, mn3):
     mn = mn1.fix(1)
     assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [10, 30])
@@ -238,9 +237,13 @@ def test_fix(mn1, mn2):
     assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
-
     expected = [[5.363636, 0.363636], [0.363636, 0.363636]]
     assert_allclose(mn.precision, expected, atol=1e-5)
+
+    mn = mn3.fix(1)
+    assert_allclose(mn.mean, [1e-10, 1e10])
+    expected = np.diag([1e-20, 1e20])
+    assert_allclose(mn.cov, expected)
 
 
 def test_conditional_vs_fix():

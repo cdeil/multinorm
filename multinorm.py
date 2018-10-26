@@ -470,7 +470,7 @@ class MultiNorm:
         names = self._name_index.get_names(mask)
 
         mean = self.scipy.mean[mask]
-        precision = self.scipy.cov_info.pinv[np.ix_(mask, mask)]
+        precision = self.precision.values[np.ix_(mask, mask)]
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
@@ -482,7 +482,7 @@ class MultiNorm:
         """
         point = np.asanyarray(point)
         d = self.mean - point
-        sigma = np.dot(np.dot(d.T, self.precision), d)
+        sigma = np.dot(np.dot(d.T, self.precision.values), d)
         return np.sqrt(sigma)
 
     def pdf(self, points):
