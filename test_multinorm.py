@@ -55,7 +55,7 @@ def mn3():
     """
     mean = np.array([1e-10, 1, 1e10])
     err = 1.0 * mean
-    names = ['a', "b", "c"]
+    names = ["a", "b", "c"]
     return MultiNorm.from_err(mean, err, names=names)
 
 
@@ -88,6 +88,12 @@ def test_init_singular():
 
 def test_repr(mn1):
     assert "MultiNorm" in str(mn1)
+
+
+def test_eq(mn1):
+    assert mn1 == mn1
+    assert mn1 != mn2
+    assert mn1 != "asdf"
 
 
 def test_from_err():
@@ -190,6 +196,10 @@ def test_precision(mn1, mn2, mn3):
 
     expected = np.diag([1e20, 1, 1e-20])
     assert_allclose(mn3.precision, expected)
+
+
+def test_drop(mn1):
+    assert mn1.drop("b") == mn1.marginal(["a", "c"])
 
 
 def test_marginal(mn1, mn2):

@@ -13,7 +13,7 @@ from multinorm import MultiNorm
 
 mean = np.array([1e-20, 1, 1e20])
 err = 1 * mean
-names = ['a', "b", "c"]
+names = ["a", "b", "c"]
 mn = MultiNorm.from_err(mean, err, names=names)
 
 print(mn)
@@ -23,8 +23,7 @@ print(mn.cov.values)
 try:
     print(mn.precision.values)
 except np.linalg.LinAlgError:
-    print('SINGULAR m3.precision')
+    print("SINGULAR m3.precision")
 
 # GOOD
 print(np.linalg.inv(mn.cov.values))
-

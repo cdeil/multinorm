@@ -30,7 +30,7 @@ except DistributionNotFound:
 # In Python 3.8 a functools.cached_property is added
 # So we change to that name
 def cached_property(fn):
-    attr_name = '_cache_' + fn.__name__
+    attr_name = "_cache_" + fn.__name__
 
     @property
     @functools.wraps(fn)
@@ -88,6 +88,16 @@ class MultiNorm:
         s += str(self.parameters)
         return s
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        return (
+            self.names == other.names
+            and (self.mean == other.mean).all()
+            and (self.cov == other.cov).all(axis=None)
+        )
+
     @classmethod
     def from_err(cls, mean=None, err=None, correlation=None, names=None):
         r"""Create `MultiNorm` from parameter errors.
@@ -116,7 +126,7 @@ class MultiNorm:
         """
         if err is None:
             if mean is None:
-                raise ValueError('Must give mean or err')
+                raise ValueError("Must give mean or err")
 
             err = np.ones_like(mean)
 
@@ -350,6 +360,24 @@ class MultiNorm:
         matrix = _matrix_inverse(self.scipy.cov)
         return self._pandas_matrix(matrix)
 
+    def drop(self, pars):
+        """Drop parameters.
+
+        This simply removes the entry from the `mean` vector,
+        and the corresponding column and row from the `cov` matrix.
+
+        The computation is the same as :meth:`MultiNorm.marginal`,
+        only here the parameters to drop are given, and there
+        the parameters to keep are given.
+
+        Parameters
+        ----------
+        pars : list
+            Parameters to fix (indices or names)
+        """
+        mask = np.invert(self._name_index.get_mask(pars))
+        return self._subset(mask)
+
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
 
@@ -366,6 +394,9 @@ class MultiNorm:
             Marginal distribution
         """
         mask = self._name_index.get_mask(pars)
+        return self._subset(mask)
+
+    def _subset(self, mask):
         names = self._name_index.get_names(mask)
 
         mean = self.scipy.mean[mask]
@@ -425,7 +456,7 @@ class MultiNorm:
         return self.__class__(mean, cov, names)
 
     def fix(self, pars):
-        """Fix some parameters.
+        """Fix parameters.
 
         See :ref:`theory_fix`.
 
