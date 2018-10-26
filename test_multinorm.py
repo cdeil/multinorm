@@ -261,10 +261,17 @@ def test_to_uncertainties(mn1):
     assert_allclose(c.std_dev, 3)
 
 
-def test_to_matplotlib_ellipse(mn1):
+def test_to_matplotlib_ellipse(mn1, mn2):
     ellipse = mn1.marginal(["a", "b"]).to_matplotlib_ellipse()
     assert_allclose(ellipse.center, (10, 20))
     assert_allclose(ellipse.width, 2)
     assert_allclose(ellipse.height, 4)
-    # TODO: change to a test case where `angle` is nonzero and well defined.
-    assert_allclose(ellipse.angle, 0)
+    # Angle could be 0 or equivalent 180 due to rounding
+    angle = np.abs(ellipse.angle - np.array([0, 180])).min()
+    assert_allclose(angle, 0)
+
+    ellipse = mn2.marginal(["a", "b"]).to_matplotlib_ellipse()
+    assert_allclose(ellipse.center, (1, 3))
+    assert_allclose(ellipse.width, 0.82842712)
+    assert_allclose(ellipse.height, 4.82842712)
+    assert_allclose(ellipse.angle, 157.5)

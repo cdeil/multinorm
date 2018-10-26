@@ -275,8 +275,7 @@ class MultiNorm:
     def _eigh(self):
         # TODO: can this be computed from `self.scipy.cov_info.U`?
         # TODO: expose covar eigenvalues and vectors?
-        # return eigh(self.scipy.cov)
-        return np.linalg.eigh(self.cov)
+        return eigh(self.scipy.cov)
 
     @cached_property
     def _mean_weighted(self):
