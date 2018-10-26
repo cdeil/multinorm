@@ -1,1 +1,5 @@
 include LICENSE
+
+exclude .gitignore
+exclude .travis.yml
+exclude readthedocs.yml
