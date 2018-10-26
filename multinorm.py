@@ -10,9 +10,10 @@ A Python class to work with model fit results
 - License: BSD-3-Clause
 """
 from pkg_resources import get_distribution, DistributionNotFound
+import functools
 import numpy as np
 import pandas as pd
-from scipy.linalg import pinvh
+from scipy.linalg import pinvh, eigh
 from scipy.stats import multivariate_normal
 
 __all__ = ["MultiNorm"]
@@ -22,6 +23,23 @@ try:
 except DistributionNotFound:
     # package is not installed
     pass
+
+
+# Lazy property taken from here:
+# https://stackoverflow.com/a/3013910/498873
+# In Python 3.8 a functools.cached_property is added
+# So we change to that name
+def cached_property(fn):
+    attr_name = '_cache_' + fn.__name__
+
+    @property
+    @functools.wraps(fn)
+    def _cached_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+
+    return _cached_property
 
 
 class MultiNorm:
@@ -36,6 +54,10 @@ class MultiNorm:
     - Tutorial Jupyter notebook: `multinorm.ipynb`_
     - Documentation: :ref:`gs`, :ref:`create`, :ref:`analyse`
     - Equations and statistics: :ref:`theory`
+
+    Note that MultiNorm objects should be used read-only,
+    almost all properties are cached. If you need to modify
+    values, make a new `MultiNorm` object.
 
     Parameters
     ----------
@@ -53,9 +75,6 @@ class MultiNorm:
         # so we call it first to avoid having to duplicate that
         self._scipy = multivariate_normal(mean, cov, allow_singular=True)
         self._name_index = _NameIndex(names, self.n)
-
-        # For other cached properties
-        self._cache = {}
 
     def __repr__(self):
         s = "{} with n={} parameters:\n".format(self.__class__.__name__, self.n)
@@ -190,7 +209,7 @@ class MultiNorm:
         """
         return self._scipy
 
-    @property
+    @cached_property
     def parameters(self):
         """Parameter table (`pandas.DataFrame`).
 
@@ -252,17 +271,18 @@ class MultiNorm:
 
         return Ellipse(xy=xy, width=width, height=height, angle=angle, **kwargs)
 
-    @property
+    @cached_property
     def _eigh(self):
         # TODO: can this be computed from `self.scipy.cov_info.U`?
         # TODO: expose covar eigenvalues and vectors?
+        # return eigh(self.scipy.cov)
         return np.linalg.eigh(self.cov)
 
-    @property
+    @cached_property
     def _mean_weighted(self):
         return np.dot(self.precision.values, self.mean.values)
 
-    @property
+    @cached_property
     def n(self):
         """Number of dimensions of the distribution (int).
 
@@ -270,35 +290,32 @@ class MultiNorm:
         """
         return self.scipy.dim
 
-    @property
+    @cached_property
     def mean(self):
         """Mean vector (`pandas.Series`)."""
         return self._pandas_series(self.scipy.mean, "mean")
 
-    @property
+    @cached_property
     def cov(self):
         """Covariance matrix (`pandas.DataFrame`)."""
         return self._pandas_matrix(self.scipy.cov)
 
     # TODO: probably should make this a pandas Index.
-    @property
+    @cached_property
     def names(self):
         """Parameter names (`list` of `str`)."""
         return self._name_index.names
 
-    @property
+    @cached_property
     def err(self):
         r"""Error vector (`pandas.DataFrame`).
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        if "err" not in self._cache:
-            err = np.sqrt(np.diag(self.cov))
-            self._cache["err"] = self._pandas_series(err, "err")
+        err = np.sqrt(np.diag(self.cov))
+        return self._pandas_series(err, "err")
 
-        return self._cache["err"]
-
-    @property
+    @cached_property
     def correlation(self):
         r"""Correlation matrix (`pandas.DataFrame`).
 
@@ -307,13 +324,10 @@ class MultiNorm:
         .. math::
             C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
         """
-        if "correlation" not in self._cache:
-            c = self.cov / np.outer(self.err, self.err)
-            self._cache["correlation"] = self._pandas_matrix(c)
+        c = self.cov / np.outer(self.err, self.err)
+        return self._pandas_matrix(c)
 
-        return self._cache["correlation"]
-
-    @property
+    @cached_property
     def precision(self):
         """Precision matrix (`pandas.DataFrame`).
 
@@ -321,11 +335,8 @@ class MultiNorm:
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        if "precision" not in self._cache:
-            matrix = self.scipy.cov_info.pinv
-            self._cache["precision"] = self._pandas_matrix(matrix)
-
-        return self._cache["precision"]
+        matrix = self.scipy.cov_info.pinv
+        return self._pandas_matrix(matrix)
 
     def marginal(self, pars):
         """Marginal `MultiNormal` distribution.
