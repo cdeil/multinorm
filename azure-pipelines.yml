@@ -28,15 +28,21 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
-      pip install pytest pytest-cov codecov
-      pytest -v --junitxml=junit/test-results.xml
-    displayName: 'pytest'
+      pip install pytest pytest-cov
+      pytest -v --junitxml=junit/test-results.xml --cov=multinorm --cov-report=xml --cov-report=html
+    displayName: 'Test with pytest'
 
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-results.xml'
       testRunTitle: 'Python $(python.version)'
     condition: succeededOrFailed()
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
 - job: 'Publish'
   dependsOn: 'Test'
