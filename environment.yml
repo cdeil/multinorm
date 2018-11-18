@@ -23,6 +23,9 @@ dependencies:
   - sphinx
   - pylint
   - flake8
+  - iminuit
+  - numdifftools
+  - xarray
   - pip:
     - setuptools_scm
     - numpydoc

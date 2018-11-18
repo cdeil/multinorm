@@ -44,16 +44,10 @@ Install
 To hack on ``multinorm``, you need to have a development environment
 with all packages and tools installed.
 
-If you're using ``conda``, use this::
+I'm using ``conda``, there it's easy to create the environment::
 
     conda env create -f environment.yml
     conda activate multinorm
-
-If you're using ``pip``, you can use ``pipenv`` like this::
-
-    pip install pipenv
-    pipenv install
-    pipenv shell
 
 With the virtual environment active, run this command::
 
