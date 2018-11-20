@@ -5,15 +5,113 @@
 Theory
 ======
 
-In this section, we give a bit of theory background concerning the methods
-used in ``multinorm``. We give the formulae used, and a reference to where
-the formula and a derivation and discussion can be found.
+This section gives a bit of theory background about the multivariate normal
+distribution, the goal is to have all formulae used in the `MultiNorm` methods
+documented here.
+
+The `Wikipedia normal distribution`_ and the `Wikipedia multivariate normal`_
+pages contain most of what we use, so do most textbooks that cover the
+multivariate normal distribution.
+
+Here we just give the results, we don't derive them.
 
 .. note::
 
     The multivariate normal distribution has very nice mathematical
-    properties. Every derived quantity follows either again a multivariate
+    properties. Most operations are given by linear algebra.
+    Every derived quantity follows either again a multivariate
     normal distribution or a chi-squared distribution.
+
+.. _theory_pdf:
+
+Probability density
+-------------------
+
+The (univariate) normal distribution :math:`x \sim N(\mu, \sigma^2)`
+for a variable :math:`x` with mean :math:`\mu` and variance :math:`\sigma^2`
+has the probability density function (``pdf``)
+
+.. math::
+    f(x) = \frac{1}{\sqrt{(2 \pi) \sigma^2}}
+           \exp\left( -\frac{1}{2} \frac{(x - \mu)^2}{\sigma^2}\right).
+
+The variance :math:`\Sigma` is the square of the standard deviation :math:`\sigma`:
+
+.. math::
+    \Sigma = \sigma ^ 2
+
+The multivariate normal distribution :math:`x \sim N(\mu, \Sigma)`
+for a variable :math:`x` (vector of length ``N``), with mean :math:`\mu` (vector of length ``N``)
+and covariance matrix :math:`\Sigma` (square symmetric matrix of shape ``(N, N)``) has the pdf:
+
+.. math::
+    f(x) = \frac{1}{\sqrt{(2 \pi)^N \det \Sigma}}
+           \exp\left( -\frac{1}{2} (x - \mu)^T \Sigma^{-1} (x - \mu) \right),
+
+Note that the univariate distribution is a special case of the multivariate distribution
+for ``N=1``, one just has to write :math:`(x - \mu)^2 / \sigma^2` as
+:math:`(x - \mu)^T \Sigma^{-1} (x - \mu)` in the form that works for vectors :math:`x` and :math:`\mu`
+and a matrix :math:`\Sigma`.
+
+The inverse of the covariance matrix :math:`\Sigma` is called the precision matrix :math:`Q`:
+
+.. math::
+    Q = \Sigma^{-1}
+
+For the one-dimensional distribution the precision is the inverse variance, :math:`Q = 1 / \sigma^2`,
+i.e. the precision is large if the variance and standard deviation are small.
+
+.. note::
+
+    Note that for a measurement :math:`\mu \pm \sigma` where :math:`sigma` represents the parameter
+    error, the covariance matrix contains the squared errors :math:`\Sigma_{ii} = \sigma_i ^2` on the diagonal,
+    and to obtain the error from the covariance matrix one uses :math:`\sigma_i = \sqrt{\Sigma_ii}`.
+
+    Sometimes the covariance matrix is also called "error matrix". We avoid that term because
+    it is confusing, given that the matrix doesn't contain errors, but the squared errors
+    on the diagonal.
+
+    Sometimes also the term "variance-covariance matrix" is used instead of just "covariance matrix".
+    This is accurate: the matrix does contain the parameter variances on the diagonal,
+    and the off-diagonal terms are the covariances.
+
+.. _theory_compute:
+
+Compute errors
+--------------
+
+If we define the "fit statistic" function as minus two times the log likelihood:
+
+.. math::
+    s(x) = - 2 \log(f(x))
+
+then we see that if :math:`f` is a multinormal distribution, then :math:`s` will be a parabola:
+
+.. math::
+    s(x) = s_0 + \left(\frac{x - \mu}{\sigma}\right)^2
+
+with the best-fit statistic value :math:`s_0` of
+
+.. math::
+    s_0 = TODO
+
+The second derivative (called Hessian) :math:`\frac{d^2s}{dx^2}` is given by:
+
+.. math::
+    H = \frac{d^2s}{dx^2}(x)  = 2 / \sigma^2
+
+So for a given "fit statistic" function, the covariance matrix can be computed
+via the inverse Hessian:
+
+.. math::
+
+    If you define a fit statistic function as :math:`s(x) = - 2 \log(f(x))`,
+    then the Hessian :math:`H = \delta s / \del x \del y` is twir
+    \Sigma = 2 H^{-1}
+
+.. note::
+
+    The covariance matrix is
 
 .. _theory_marginal:
 

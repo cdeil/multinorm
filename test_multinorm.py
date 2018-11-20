@@ -313,3 +313,9 @@ def test_to_matplotlib_ellipse(mn1, mn2):
     assert_allclose(ellipse.width, 0.82842712)
     assert_allclose(ellipse.height, 4.82842712)
     assert_allclose(ellipse.angle, 157.5)
+
+
+def test_to_xarray(mn1):
+    data = mn1.to_xarray('pdf')
+    assert data.dims == ("a", "b", "c")
+    assert_allclose(data.values[1, 2, 3], 4.20932837e-08)

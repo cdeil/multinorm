@@ -93,9 +93,9 @@ class MultiNorm:
             return NotImplemented
 
         return (
-            self.names == other.names
-            and (self.mean == other.mean).all()
-            and (self.cov == other.cov).all(axis=None)
+                self.names == other.names
+                and (self.mean == other.mean).all()
+                and (self.cov == other.cov).all(axis=None)
         )
 
     @classmethod
@@ -242,6 +242,16 @@ class MultiNorm:
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
 
+    def confidence_interval(self, n_sigma=1):
+        """Confidence interval table (`pandas.DataFrame`).
+
+        Index is "name", columns are "lo" and "hi"
+        """
+        d = n_sigma * self.err
+        data = {"lo": self.mean - d, "hi": self.mean + d}
+        index = pd.Index(self.names, name="name")
+        return pd.DataFrame(data, index)
+
     def _pandas_series(self, data, name):
         index = pd.Index(self.names, name="name")
         return pd.Series(data, index, name=name)
@@ -266,6 +276,51 @@ class MultiNorm:
         from uncertainties import correlated_values
 
         return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
+
+    def to_xarray(self, fcn='pdf', n_sigma=3, num=100):
+        """Make an `xarray.DataArray` rastered image.
+
+        This is mostly useful for visualisation.
+
+        All computations can be done without this image.
+
+        TODO: document better
+
+        TODO: add "pmf" option with integral probabilities per pixel
+
+        Parameters
+        ----------
+        fcn : {"pdf", "logpdf", "stat", "sigma"}
+            Function to compute data values
+        n_sigma : int
+            Number of standard deviations. Controls image coordinate range.
+        num : int
+            Number of pixels in each dimension. Controls image resolution.
+        """
+        from xarray import DataArray
+
+        coords = [
+            np.linspace(row['lo'], row['hi'], num)
+            for _, row in self.confidence_interval(n_sigma).iterrows()
+        ]
+        points = [_.flatten() for _ in np.meshgrid(*coords)]
+        points = np.array(points).T
+        breakpoint()
+
+        if fcn == 'pdf':
+            data = self.pdf(points)
+        elif fcn == 'logpdf':
+            data = self.logpdf(points)
+        elif fcn == 'stat':
+            data = - 2 * self.logpdf(points)
+        elif fcn == 'sigma':
+            data = self.sigma_distance(points)
+        else:
+            raise ValueError(f"Invalid fcn: {fcn!r}")
+
+        data = data.reshape(self.n * (num,))
+
+        return DataArray(data, coords, self.names)
 
     def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
         """Create `matplotlib.patches.Ellipse`_.
@@ -293,6 +348,12 @@ class MultiNorm:
         angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
 
         return Ellipse(xy=xy, width=width, height=height, angle=angle, **kwargs)
+
+    def plot(self, ax=None, n_sigma=1, **kwargs):
+        import matplotlib.pyplot as plt
+        ax = plt.gca() if ax is None else ax
+        ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
+        ax.add_artist(ellipse)
 
     @cached_property
     def _eigh(self):
@@ -329,13 +390,16 @@ class MultiNorm:
         return self._name_index.names
 
     @cached_property
+    def _err(self):
+        return np.sqrt(np.diag(self.scipy.cov))
+
+    @cached_property
     def err(self):
         r"""Error vector (`pandas.DataFrame`).
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        err = np.sqrt(np.diag(self.cov))
-        return self._pandas_series(err, "err")
+        return self._pandas_series(self._err, "err")
 
     @cached_property
     def correlation(self):
@@ -474,6 +538,20 @@ class MultiNorm:
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
+    def standardize(self):
+        """Standardized distribution.
+
+        For a random variable $x$ with a distribution with mean $\mu$
+        and standard deviation $\sigma$, given by $Z = (x - \mu) / \sigma$,
+        so that $Z$ has a distribution with mean zero and standard deviation of one.
+
+        Returns a new distribution object with mean zero,
+        and covariance matrix given by the ``correlation`` matrix.
+        """
+        mean = np.zeros(self.n)
+        cov = self.scipy.cov / np.outer(self._err, self._err)
+        return self.__class__(mean, cov, self.names)
+
     def sigma_distance(self, point):
         """Number of standard deviations from the mean (float).
 
@@ -481,7 +559,7 @@ class MultiNorm:
         See :ref:`theory_sigmas`.
         """
         point = np.asanyarray(point)
-        d = self.mean - point
+        d = self.mean.values - point
         sigma = np.dot(np.dot(d.T, self.precision.values), d)
         return np.sqrt(sigma)
 
