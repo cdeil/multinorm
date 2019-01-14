@@ -541,7 +541,7 @@ class MultiNorm:
         return self.__class__(mean, cov, names)
 
     def standardize(self):
-        """Standardized distribution.
+        r"""Standardized distribution.
 
         For a random variable :math:`x` with a distribution with mean :math:`\mu`
         and standard deviation :math:`\sigma`, given by :math:`Z = (x - \mu) / \sigma`,
