@@ -305,7 +305,6 @@ class MultiNorm:
         ]
         points = [_.flatten() for _ in np.meshgrid(*coords)]
         points = np.array(points).T
-        breakpoint()
 
         if fcn == 'pdf':
             data = self.pdf(points)
@@ -340,14 +339,17 @@ class MultiNorm:
 
         from matplotlib.patches import Ellipse
 
+        ellipse = self._compute_ellipse(n_sigma)
+
+        return Ellipse(**ellipse, **kwargs)
+
+    def _compute_ellipse(self, n_sigma=1):
         # See https://stackoverflow.com/questions/12301071
         xy = self.scipy.mean
-
         vals, vecs = self._eigh
         width, height = 2 * n_sigma * np.sqrt(vals)
         angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
-
-        return Ellipse(xy=xy, width=width, height=height, angle=angle, **kwargs)
+        return {"xy": xy, "width": width, "height": height, "angle": angle}
 
     def plot(self, ax=None, n_sigma=1, **kwargs):
         import matplotlib.pyplot as plt
@@ -541,9 +543,9 @@ class MultiNorm:
     def standardize(self):
         """Standardized distribution.
 
-        For a random variable $x$ with a distribution with mean $\mu$
-        and standard deviation $\sigma$, given by $Z = (x - \mu) / \sigma$,
-        so that $Z$ has a distribution with mean zero and standard deviation of one.
+        For a random variable :math:`x` with a distribution with mean :math:`\mu`
+        and standard deviation :math:`\sigma`, given by :math:`Z = (x - \mu) / \sigma`,
+        so that :math:`Z` has a distribution with mean zero and standard deviation of one.
 
         Returns a new distribution object with mean zero,
         and covariance matrix given by the ``correlation`` matrix.
