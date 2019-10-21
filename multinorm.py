@@ -64,10 +64,11 @@ class MultiNorm:
         self._scipy = multivariate_normal(mean, cov, allow_singular=True)
         self._name_index = _NameIndex(names, self.n)
 
-    def __repr__(self):
-        s = "{} with n={} parameters:\n".format(self.__class__.__name__, self.n)
-        s += str(self.parameters)
-        return s
+    def __str__(self):
+        return (
+            f"{self.__class__.__name__} with n={self.n} parameters:\n"
+            f"{self.parameters!s}"
+        )
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -564,10 +565,10 @@ class _NameIndex(object):
 
     def __init__(self, names, n):
         if names is None:
-            names = ["par_{}".format(idx) for idx in range(n)]
+            names = [f"par_{idx}" for idx in range(n)]
         else:
             if len(names) != n:
-                raise ValueError("len(names) = {}, expected n={}".format(len(names), n))
+                raise ValueError(f"len(names) = {len(names)}, expected n={n}")
 
         self.names = names
 

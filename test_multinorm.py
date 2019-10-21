@@ -86,8 +86,14 @@ def test_init_singular():
     assert_allclose(mn.cov, cov)
 
 
-def test_repr(mn1):
-    assert "MultiNorm" in str(mn1)
+def test_str(mn1):
+    assert str(mn1) == """\
+MultiNorm with n=3 parameters:
+      mean  err
+name           
+a     10.0  1.0
+b     20.0  2.0
+c     30.0  3.0"""
 
 
 def test_eq(mn1):
