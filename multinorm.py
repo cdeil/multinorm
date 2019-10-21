@@ -497,8 +497,6 @@ class MultiNorm:
         cov21 = self.scipy.cov[np.ix_(mask2, mask1)]
         cov22 = self.scipy.cov[np.ix_(mask2, mask2)]
 
-        # TODO: would it be better to compute the inverse of cov22
-        # instead of calling solve twice?
         mean = mean1 + np.dot(cov12, np.linalg.solve(cov22, values - mean2))
         cov = cov11 - np.dot(cov12, np.linalg.solve(cov22, cov21))
 
