@@ -39,12 +39,10 @@ https://lmfit.github.io
 https://iminuit.readthedocs.io
 https://sherpa.readthedocs.io
 
+.. _create_from_samples:
 
-
-.. _create_from_points:
-
-From points
------------
+From samples
+------------
 
 A common way to analyse likelihood or in Bayesian analyses the
 posterior probability distributions is to use MCMC methods that
@@ -55,25 +53,22 @@ Estimating the multivariate normal distribution from samples well
 can be difficult, there are many methods with different trade-offs.
 We recommend using a different package for this task, e.g. `sklearn.covariance`_.
 
-That said, there is a method :meth:`MultiNorm.from_points` that calls :func:`numpy.std`
+That said, there is a method :meth:`MultiNorm.from_samples` that calls :func:`numpy.std`
 to compute the mean vector, and :func:`numpy.cov` to compute what's sometimes called
 the "empirical" multivariate normal estimate.
 
-Points should always be given as 2-dimensional arrays with shape ``(n_dim, n_points)``.
+Samples should always be given as 2-dimensional arrays with shape ``(n_dim, n_samples)``.
 
 ::
 
-    >>> points = mn.sample(size=100, random_state=0)
-    >>> MultiNorm.from_points(points)
-    MultiNorm(n=3)
-    names: ['par_0', 'par_1', 'par_2']
-    mean: [ 9.87581591 20.21250462 30.30156153]
-    err: [0.98090098 1.97394775 3.09360932]
-    cov:
-    [[ 0.96216674 -0.04439635  0.33802118]
-     [-0.04439635  3.89646972 -0.45369176]
-     [ 0.33802118 -0.45369176  9.57041861]]
-
+    >>> samples = mn.sample(size=100, random_state=0)
+    >>> MultiNorm.from_samples(samples, names=mn.names)
+    MultiNorm with n=3 parameters:
+               mean       err
+    name
+    a      9.875816  0.980901
+    b     20.212505  1.973948
+    c     30.301562  3.093609
 
 .. _create_from_pub:
 

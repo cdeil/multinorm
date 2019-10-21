@@ -113,10 +113,10 @@ def test_from_err():
     assert_allclose(mn.correlation, correlation)
 
 
-def test_from_points():
+def test_from_samples():
     points = [(10, 20, 30), (12, 20, 30)]
     names = ["a", "b", "c"]
-    mn = MultiNorm.from_points(points, names)
+    mn = MultiNorm.from_samples(points, names)
 
     assert mn.names == names
     assert_allclose(mn.mean, [11, 20, 30])

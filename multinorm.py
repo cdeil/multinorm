@@ -124,19 +124,21 @@ class MultiNorm:
         return cls(mean, cov, names)
 
     @classmethod
-    def from_points(cls, points, names=None):
+    def from_samples(cls, points, names=None):
         """Create `MultiNorm` from parameter points.
 
         Usually the points are samples from some distribution
         and creating this `MultiNorm` distribution is an
         estimate / approximation of that distribution of interest.
 
-        See: :ref:`create_from_points`.
+        See: :ref:`create_from_samples`.
 
         Parameters
         ----------
         points : numpy.ndarray
             Array of data points with shape ``(n, 2)``.
+        names : list
+            Parameter names
         """
         mean = np.mean(points, axis=0)
         cov = np.cov(points, rowvar=False)
