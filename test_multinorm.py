@@ -4,7 +4,7 @@ import warnings
 import pytest
 import numpy as np
 import pandas as pd
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 from multinorm import MultiNorm
 
 
@@ -84,7 +84,6 @@ def test_init_singular():
     cov = [[1, 0], [0, 0]]
     mn = MultiNorm(cov=cov)
     assert_allclose(mn.cov, cov)
-
 
 def test_str(mn1):
     assert str(mn1) == """\
@@ -327,3 +326,18 @@ def test_to_xarray(mn1):
     data = mn1.to_xarray("pdf")
     assert data.dims == ("a", "b", "c")
     assert_allclose(data.values[1, 2, 3], 4.20932837e-08)
+
+def test_name_index(mn1):
+    name_index = mn1._name_index
+    assert name_index.names == ["a", "b", "c"]
+    assert_equal(name_index.get_idx(["a", "c"]), [0, 2])
+    assert_equal(name_index.get_mask(["a", "c"]), [True, False, True])
+
+    with pytest.raises(ValueError):
+        name_index.get_idx(["a", "d"])
+
+    with pytest.raises(ValueError):
+        name_index.get_mask(["a", "d"])
+
+    with pytest.raises(TypeError):
+        name_index.get_mask([b"a"])

@@ -369,7 +369,6 @@ class MultiNorm:
         """Covariance matrix (`pandas.DataFrame`)."""
         return self._pandas_matrix(self.scipy.cov)
 
-    # TODO: probably should make this a pandas Index.
     @property
     def names(self):
         """Parameter names (`list` of `str`)."""
@@ -447,10 +446,9 @@ class MultiNorm:
         return self._subset(mask)
 
     def _subset(self, mask):
-        names = self._name_index.get_names(mask)
-
         mean = self.scipy.mean[mask]
         cov = self.scipy.cov[np.ix_(mask, mask)]
+        names = self._name_index.get_names(mask)
         return self.__class__(mean, cov, names)
 
     def conditional(self, pars, values=None):
@@ -555,13 +553,8 @@ class MultiNorm:
         return self.scipy.rvs(size, random_state)
 
 
-# TODO: remove, use pandas Index instead somehow
-class _NameIndex(object):
-    """Parameter index.
-
-    Doesn't do much, just store parameter names
-    and match parameter names and indices.
-    """
+class _NameIndex:
+    """Parameter name index."""
 
     def __init__(self, names, n):
         if names is None:
@@ -572,10 +565,6 @@ class _NameIndex(object):
 
         self.names = names
 
-    @property
-    def n(self):
-        return len(self.names)
-
     def get_idx(self, pars):
         """Create parameter index array.
 
@@ -583,6 +572,7 @@ class _NameIndex(object):
         Support parameter indices (int) and names (str)
         """
         # TODO: should we support scalar?
+        # TODO: support `np.int32` also
         if isinstance(pars, (int, str)):
             pars = [pars]
 
@@ -603,12 +593,10 @@ class _NameIndex(object):
 
     def get_mask(self, pars):
         idx = self.get_idx(pars)
-        mask = np.zeros(self.n, dtype=bool)
+        mask = np.zeros(len(self.names), dtype=bool)
         mask[idx] = True
         return mask
 
-    def get_names(self, selection):
+    def get_names(self, mask):
         # This works for an index array or mask for the selection
-        return list(np.array(self.names)[selection])
-        # See https://docs.python.org/3.1/library/itertools.html#itertools.compress
-        # return [d for d, s in zip(self.names, mask) if s]
+        return list(np.array(self.names)[mask])
