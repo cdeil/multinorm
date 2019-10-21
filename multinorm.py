@@ -23,6 +23,7 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+
 def _matrix_inverse(matrix):
     # np.linalg.inv seems to give numerically stable results
     # We need inverse in several places, so in case there's
@@ -73,9 +74,9 @@ class MultiNorm:
             return NotImplemented
 
         return (
-                self.names == other.names
-                and (self.mean == other.mean).all()
-                and (self.cov == other.cov).all(axis=None)
+            self.names == other.names
+            and (self.mean == other.mean).all()
+            and (self.cov == other.cov).all(axis=None)
         )
 
     @classmethod
@@ -257,7 +258,7 @@ class MultiNorm:
 
         return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
 
-    def to_xarray(self, fcn='pdf', n_sigma=3, num=100):
+    def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
         """Make an `xarray.DataArray` rastered image.
 
         This is mostly useful for visualisation.
@@ -280,19 +281,19 @@ class MultiNorm:
         from xarray import DataArray
 
         coords = [
-            np.linspace(row['lo'], row['hi'], num)
+            np.linspace(row["lo"], row["hi"], num)
             for _, row in self.confidence_interval(n_sigma).iterrows()
         ]
         points = [_.flatten() for _ in np.meshgrid(*coords)]
         points = np.array(points).T
 
-        if fcn == 'pdf':
+        if fcn == "pdf":
             data = self.pdf(points)
-        elif fcn == 'logpdf':
+        elif fcn == "logpdf":
             data = self.logpdf(points)
-        elif fcn == 'stat':
-            data = - 2 * self.logpdf(points)
-        elif fcn == 'sigma':
+        elif fcn == "stat":
+            data = -2 * self.logpdf(points)
+        elif fcn == "sigma":
             data = self.sigma_distance(points)
         else:
             raise ValueError(f"Invalid fcn: {fcn!r}")
@@ -333,6 +334,7 @@ class MultiNorm:
 
     def plot(self, ax=None, n_sigma=1, **kwargs):
         import matplotlib.pyplot as plt
+
         ax = plt.gca() if ax is None else ax
         ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
         ax.add_artist(ellipse)

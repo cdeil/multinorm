@@ -316,6 +316,6 @@ def test_to_matplotlib_ellipse(mn1, mn2):
 
 
 def test_to_xarray(mn1):
-    data = mn1.to_xarray('pdf')
+    data = mn1.to_xarray("pdf")
     assert data.dims == ("a", "b", "c")
     assert_allclose(data.values[1, 2, 3], 4.20932837e-08)
