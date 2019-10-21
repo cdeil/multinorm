@@ -240,10 +240,9 @@ class MultiNorm:
         return pd.Series(data, index, name=name)
 
     def _pandas_matrix(self, matrix):
+        # We use the same index object for rows and columns
         index = pd.Index(self.names, name="name")
-        # TODO: use `index` twice or make separate `columns` index?
-        columns = pd.Index(self.names, name="name")
-        return pd.DataFrame(matrix, index, columns)
+        return pd.DataFrame(matrix, index, index)
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
