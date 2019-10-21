@@ -31,4 +31,4 @@
 .. _pymc: https://docs.pymc.io
 .. _multinorm.ipynb: https://nbviewer.jupyter.org/github/cdeil/multinorm/blob/master/multinorm.ipynb
 
-.. module:: multinorm
+.. currentmodule:: multinorm

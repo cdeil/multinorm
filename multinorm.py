@@ -261,7 +261,7 @@ class MultiNorm:
         return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
 
     def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
-        """Make an `xarray.DataArray` rastered image.
+        """Make an `xarray.DataArray` raster image.
 
         This is mostly useful for visualisation.
 
@@ -273,8 +273,9 @@ class MultiNorm:
 
         Parameters
         ----------
-        fcn : {"pdf", "logpdf", "stat", "sigma"}
-            Function to compute data values
+        fcn : str
+            Function to compute data values.
+            Choices: "pdf", "logpdf", "stat", "sigma"
         n_sigma : int
             Number of standard deviations. Controls image coordinate range.
         num : int
