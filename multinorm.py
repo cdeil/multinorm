@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
-multinorm - Multivariate Normal Distributions for Humans.
+multinorm - Multivariate Normal Distributions from Python.
 
 A Python class to work with model fit results
 (parameters and the covariance matrix).

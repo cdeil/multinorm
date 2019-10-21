@@ -3,7 +3,7 @@
 multinorm
 =========
 
-*Multivariate Normal Distributions for Humans.*
+Multivariate Normal Distributions from Python.
 
 A Python class to work with model fit results
 (parameters and the covariance matrix).

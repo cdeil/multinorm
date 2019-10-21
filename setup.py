@@ -1,7 +1,7 @@
 from setuptools import setup
 
 long_description = """
-multinorm - Multivariate Normal Distributions for Humans.
+multinorm - Multivariate Normal Distributions from Python.
 
 A Python class to work with model fit results
 (parameters and the covariance matrix).
@@ -16,7 +16,7 @@ setup(
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
     install_requires=["numpy", "scipy", "pandas"],
-    description="Multivariate Normal Distributions for Humans",
+    description="Multivariate Normal Distributions from Python",
     long_description=long_description,
     author="Christoph Deil",
     author_email="Deil.Christoph@gmail.com",
