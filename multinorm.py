@@ -10,7 +10,6 @@ A Python class to work with model fit results
 - License: BSD-3-Clause
 """
 from pkg_resources import get_distribution, DistributionNotFound
-import functools
 import numpy as np
 import pandas as pd
 from scipy.linalg import eigh
@@ -23,24 +22,6 @@ try:
 except DistributionNotFound:
     # package is not installed
     pass
-
-
-# Lazy property taken from here:
-# https://stackoverflow.com/a/3013910/498873
-# In Python 3.8 a functools.cached_property is added
-# So we change to that name
-def cached_property(fn):
-    attr_name = "_cache_" + fn.__name__
-
-    @property
-    @functools.wraps(fn)
-    def _cached_property(self):
-        if not hasattr(self, attr_name):
-            setattr(self, attr_name, fn(self))
-        return getattr(self, attr_name)
-
-    return _cached_property
-
 
 def _matrix_inverse(matrix):
     # np.linalg.inv seems to give numerically stable results
@@ -62,9 +43,8 @@ class MultiNorm:
     - Documentation: :ref:`gs`, :ref:`create`, :ref:`analyse`
     - Equations and statistics: :ref:`theory`
 
-    Note that MultiNorm objects should be used read-only,
-    almost all properties are cached. If you need to modify
-    values, make a new `MultiNorm` object.
+    Note that MultiNorm objects are read-only.
+    If you need to modify values, make a new `MultiNorm` object.
 
     Parameters
     ----------
@@ -228,11 +208,11 @@ class MultiNorm:
     def scipy(self):
         """Frozen `scipy.stats.multivariate_normal`_ distribution object.
 
-        A cached property. Used for many computations internally.
+        Used for many computations internally.
         """
         return self._scipy
 
-    @cached_property
+    @property
     def parameters(self):
         """Parameter table (`pandas.DataFrame`).
 
@@ -357,17 +337,17 @@ class MultiNorm:
         ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
         ax.add_artist(ellipse)
 
-    @cached_property
+    @property
     def _eigh(self):
         # TODO: can this be computed from `self.scipy.cov_info.U`?
         # TODO: expose covar eigenvalues and vectors?
         return eigh(self.scipy.cov)
 
-    @cached_property
+    @property
     def _mean_weighted(self):
         return np.dot(self.precision.values, self.mean.values)
 
-    @cached_property
+    @property
     def n(self):
         """Number of dimensions of the distribution (int).
 
@@ -375,27 +355,27 @@ class MultiNorm:
         """
         return self.scipy.dim
 
-    @cached_property
+    @property
     def mean(self):
         """Mean vector (`pandas.Series`)."""
         return self._pandas_series(self.scipy.mean, "mean")
 
-    @cached_property
+    @property
     def cov(self):
         """Covariance matrix (`pandas.DataFrame`)."""
         return self._pandas_matrix(self.scipy.cov)
 
     # TODO: probably should make this a pandas Index.
-    @cached_property
+    @property
     def names(self):
         """Parameter names (`list` of `str`)."""
         return self._name_index.names
 
-    @cached_property
+    @property
     def _err(self):
         return np.sqrt(np.diag(self.scipy.cov))
 
-    @cached_property
+    @property
     def err(self):
         r"""Error vector (`pandas.DataFrame`).
 
@@ -403,7 +383,7 @@ class MultiNorm:
         """
         return self._pandas_series(self._err, "err")
 
-    @cached_property
+    @property
     def correlation(self):
         r"""Correlation matrix (`pandas.DataFrame`).
 
@@ -415,7 +395,7 @@ class MultiNorm:
         c = self.cov / np.outer(self.err, self.err)
         return self._pandas_matrix(c)
 
-    @cached_property
+    @property
     def precision(self):
         """Precision matrix (`pandas.DataFrame`).
 
