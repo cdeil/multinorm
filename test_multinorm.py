@@ -117,6 +117,8 @@ def test_from_err():
     mn = MultiNorm.from_err(err=err, correlation=correlation)
     assert_allclose(mn.correlation, correlation)
 
+    with pytest.raises(ValueError):
+        MultiNorm.from_err(mean)
 
 def test_from_samples():
     points = [(10, 20, 30), (12, 20, 30)]

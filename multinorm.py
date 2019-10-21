@@ -107,10 +107,7 @@ class MultiNorm:
             Parameter names
         """
         if err is None:
-            if mean is None:
-                raise ValueError("Must give mean or err")
-
-            err = np.ones_like(mean)
+            raise ValueError("Must set err parameter")
 
         err = np.asarray(err, dtype=float)
         n = len(err)
