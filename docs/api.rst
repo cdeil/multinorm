@@ -5,3 +5,4 @@ API
 
 .. autoclass:: MultiNorm
     :members:
+    :member-order: bysource
