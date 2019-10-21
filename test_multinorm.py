@@ -314,6 +314,8 @@ def test_to_matplotlib_ellipse(mn1, mn2):
     assert_allclose(ellipse.height, 4.82842712)
     assert_allclose(ellipse.angle, 157.5)
 
+    with pytest.raises(ValueError):
+        mn1.to_matplotlib_ellipse()
 
 def test_to_xarray(mn1):
     data = mn1.to_xarray("pdf")
