@@ -524,20 +524,6 @@ class MultiNorm:
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
-    def standardize(self):
-        r"""Standardized distribution.
-
-        For a random variable :math:`x` with a distribution with mean :math:`\mu`
-        and standard deviation :math:`\sigma`, given by :math:`Z = (x - \mu) / \sigma`,
-        so that :math:`Z` has a distribution with mean zero and standard deviation of one.
-
-        Returns a new distribution object with mean zero,
-        and covariance matrix given by the ``correlation`` matrix.
-        """
-        mean = np.zeros(self.n)
-        cov = self.scipy.cov / np.outer(self._err, self._err)
-        return self.__class__(mean, cov, self.names)
-
     def sigma_distance(self, point):
         """Number of standard deviations from the mean (float).
 
