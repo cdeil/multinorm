@@ -129,6 +129,17 @@ def test_from_samples():
     assert_allclose(mn.mean, [11, 20, 30])
     assert_allclose(mn.cov, [[2, 0, 0], [0, 0, 0], [0, 0, 0]])
 
+def test_from_stack():
+    d1 = MultiNorm(mean=[1, 2], cov=np.full((2, 2), 2), names=["a", "b"])
+    d2 = MultiNorm(mean=[3, 4, 5], cov=np.full((3, 3), 3), names=["c", "d", "e"])
+
+    mn = MultiNorm.from_stack([d1, d2])
+
+    assert mn.names == ["a", "b", "c", "d", "e"]
+    assert_allclose(mn.mean, [1, 2, 3, 4, 5])
+    assert_allclose(mn.cov.values[0], [2, 2, 0, 0, 0])
+    assert_allclose(mn.cov.values[4], [0, 0, 3, 3, 3])
+
 
 def test_from_product():
     d1 = MultiNorm(mean=[0, 0], names=["a", "b"])

@@ -12,7 +12,7 @@ A Python class to work with model fit results
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
 import pandas as pd
-from scipy.linalg import eigh
+from scipy.linalg import eigh, block_diag
 from scipy.stats import multivariate_normal
 
 __all__ = ["MultiNorm"]
@@ -143,13 +143,42 @@ class MultiNorm:
         return cls(mean, cov, names)
 
     @classmethod
+    def from_stack(cls, distributions):
+        """Create `MultiNorm` as stacked distributions.
+
+        Stacking means the ``names`` and ``mean`` vectors
+        are concatenated, and the ``cov`` matrices are
+        combined into a block diagonal matrix, with zeros
+        for the off-diagonal parts.
+
+        This represents the combined measurement, assuming
+        the individual distributions are for different parameters.
+
+        See :ref:`create_from_stack` and :ref:`theory_stack`.
+
+        Parameters
+        ----------
+        distributions : list
+            Python list of `MultiNorm` distributions.
+
+        Returns
+        -------
+        MultiNorm
+            Stacked distribution
+        """
+        names = np.concatenate([_.names for _ in distributions])
+        cov = block_diag(*[_.cov for _ in distributions])
+        mean = np.concatenate([_.mean for _ in distributions])
+        return cls(mean, cov, names)
+
+    @classmethod
     def from_product(cls, distributions):
         """Create `MultiNorm` as product distribution.
 
         This represents the joint likelihood distribution, assuming
         the individual distributions are from independent measurements.
 
-        See :ref:`theory_product` .
+        See :ref:`create_from_product` and :ref:`theory_product` .
 
         Parameters
         ----------
@@ -561,7 +590,8 @@ class _NameIndex:
             if len(names) != n:
                 raise ValueError(f"len(names) = {len(names)}, expected n={n}")
 
-        self.names = names
+        # TODO: change to Numpy array!
+        self.names = list(names)
 
     def get_idx(self, pars):
         """Create parameter index array.

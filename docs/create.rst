@@ -78,6 +78,13 @@ From publication
 TODO: show example how to take covar (or par errors) from a
 publication or blog post, i.e. as inputs.
 
+.. _create_from_stack:
+
+From stack
+----------
+
+TODO: document :meth:`MultiNorm.from_stack`
+
 .. _create_from_product:
 
 From product

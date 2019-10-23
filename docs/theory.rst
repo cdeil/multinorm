@@ -166,6 +166,13 @@ Add note that for MVN the covar matrix for conditional doesn't depend on paramet
 
 TODO: document and make example in the analyse section using iminuit.
 
+.. _theory_stack:
+
+Stacked distribution
+--------------------
+
+TODO: document :meth:`MultiNorm.from_stack`
+
 .. _theory_product:
 
 Product distribution
