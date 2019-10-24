@@ -49,16 +49,11 @@ class MultiNorm:
         Mean vector
     cov : numpy.ndarray
         Covariance matrix
-    names : list
-        Python list of parameter names (str).
-        Default: use "par_i" with ``i = 0 .. N - 1``.
     """
 
-    def __init__(self, mean=None, cov=None, names=None):
-        # multivariate_normal does a lot of input validation
-        # so we call it first to avoid having to duplicate that
+    def __init__(self, mean=None, cov=None):
+        # let `multivariate_normal` do all input validation
         self._scipy = multivariate_normal(mean, cov, allow_singular=True)
-        self._name_index = _NameIndex(names, self.n)
 
     def __str__(self):
         return (
@@ -71,8 +66,7 @@ class MultiNorm:
             return NotImplemented
 
         return (
-            self.names == other.names
-            and (self.mean == other.mean).all()
+            (self.mean == other.mean).all()
             and (self.cov == other.cov).all(axis=None)
         )
 
@@ -90,11 +84,6 @@ class MultiNorm:
     def cov(self):
         """Covariance matrix (`numpy.ndarray`)."""
         return self.scipy.cov
-
-    @property
-    def names(self):
-        """Parameter names (`list` of `str`)."""
-        return self._name_index.names
 
     @property
     def error(self):
@@ -134,7 +123,7 @@ class MultiNorm:
         return self._scipy
 
     @classmethod
-    def from_error(cls, mean=None, error=None, correlation=None, names=None):
+    def from_error(cls, mean=None, error=None, correlation=None):
         r"""Create `MultiNorm` from parameter errors.
 
         With errors :math:`\sigma_i` this will create a
@@ -155,8 +144,6 @@ class MultiNorm:
             Error vector
         correlation : numpy.ndarray
             Correlation matrix
-        names : list
-            Parameter names
 
         Returns
         -------
@@ -175,10 +162,10 @@ class MultiNorm:
 
         cov = correlation * np.outer(error, error)
 
-        return cls(mean, cov, names)
+        return cls(mean, cov)
 
     @classmethod
-    def from_samples(cls, samples, names=None):
+    def from_samples(cls, samples):
         """Create `MultiNorm` from parameter samples.
 
         Usually the samples are from some distribution
@@ -191,8 +178,6 @@ class MultiNorm:
         ----------
         samples : numpy.ndarray
             Array of data points with shape ``(n_samples, n_par)``.
-        names : list
-            Parameter names
 
         Returns
         -------
@@ -200,14 +185,13 @@ class MultiNorm:
         """
         mean = np.mean(samples, axis=0)
         cov = np.cov(samples, rowvar=False)
-        return cls(mean, cov, names)
+        return cls(mean, cov)
 
     @classmethod
     def from_stack(cls, distributions):
         """Create `MultiNorm` by stacking distributions.
 
-        Stacking means the ``names`` and ``mean`` vectors
-        are concatenated, and the ``cov`` matrices are
+        The ``mean`` vectors are concatenated, and the ``cov`` matrices are
         combined into a block diagonal matrix, with zeros
         for the off-diagonal parts.
 
@@ -225,10 +209,10 @@ class MultiNorm:
         -------
         `MultiNorm`
         """
-        names = np.concatenate([_.names for _ in distributions])
+        # TODO: input validation to give good error
         cov = block_diag(*[_.cov for _ in distributions])
         mean = np.concatenate([_.mean for _ in distributions])
-        return cls(mean, cov, names)
+        return cls(mean, cov)
 
     @classmethod
     def from_product(cls, distributions):
@@ -248,8 +232,6 @@ class MultiNorm:
         -------
         `MultiNorm`
         """
-        names = distributions[0].names
-
         precisions = [_.precision for _ in distributions]
         precision = np.sum(precisions, axis=0)
         cov = _matrix_inverse(precision)
@@ -257,7 +239,7 @@ class MultiNorm:
         means_weighted = [_.precision @ _.mean for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
         mean = cov @ means_weighted
-        return cls(mean, cov, names)
+        return cls(mean, cov)
 
     @classmethod
     def make_example(cls, n_par=3, n_fix=0, random_state=0):
@@ -298,7 +280,6 @@ class MultiNorm:
     def summary_dataframe(self, n_sigma=None):
         """Summary table (`pandas.DataFrame`).
 
-        - Index is set if present
         - "mean" -- `mean`
         - "error" - `error`
         - ("lo", "hi") - confidence interval (if ``n_sigma`` is set)
@@ -317,7 +298,6 @@ class MultiNorm:
 
         df = pd.DataFrame(
             data={"mean": self.mean, "error": self.error},
-            index=pd.Index(self.names, name="name"),
         )
 
         if n_sigma is not None:
@@ -340,7 +320,7 @@ class MultiNorm:
         """
         from uncertainties import correlated_values
 
-        return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
+        return correlated_values(self.scipy.mean, self.scipy.cov)
 
     def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
         """Make image of the distribution (`xarray.DataArray`).
@@ -388,7 +368,7 @@ class MultiNorm:
 
         data = data.reshape(self.n * (num,))
 
-        return DataArray(data, coords, self.names)
+        return DataArray(data, coords)
 
     def error_ellipse(self, n_sigma=1):
         """Error ellipse parameters.
@@ -445,28 +425,6 @@ class MultiNorm:
         ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
         ax.add_artist(ellipse)
 
-    def drop(self, pars):
-        """Drop parameters.
-
-        This simply removes the entry from the `mean` vector,
-        and the corresponding column and row from the `cov` matrix.
-
-        The computation is the same as `MultiNorm.marginal`,
-        only here the parameters to drop are given, and there
-        the parameters to keep are given.
-
-        Parameters
-        ----------
-        pars : list
-            Parameters to fix (indices or names)
-
-        Returns
-        -------
-        `MultiNorm`
-        """
-        mask = np.invert(self._name_index.get_mask(pars))
-        return self._subset(mask)
-
     def marginal(self, pars):
         """Marginal distribution.
 
@@ -481,14 +439,10 @@ class MultiNorm:
         -------
         `MultiNorm`
         """
-        mask = self._name_index.get_mask(pars)
-        return self._subset(mask)
-
-    def _subset(self, mask):
+        mask = self.make_index_mask(pars)
         mean = self.scipy.mean[mask]
         cov = self.scipy.cov[np.ix_(mask, mask)]
-        names = self._name_index.get_names(mask)
-        return self.__class__(mean, cov, names)
+        return self.__class__(mean, cov)
 
     def conditional(self, pars, values=None):
         """Conditional `MultiNorm` distribution.
@@ -516,16 +470,15 @@ class MultiNorm:
         # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
         # - "2" refers to the fixed parameters
         # - "1" refers to the remaining (kept) parameters
-        mask2 = self._name_index.get_mask(pars)
+        mask2 = self.make_index_mask(pars)
         mask1 = np.invert(mask2)
-
-        names = self._name_index.get_names(mask1)
 
         if values is None:
             values = self.scipy.mean[mask2]
         else:
             values = np.asarray(values, dtype=float)
 
+        # TODO: change most self.scipy.mean -> self.mean and also for cov
         mean1 = self.scipy.mean[mask1]
         mean2 = self.scipy.mean[mask2]
 
@@ -537,7 +490,7 @@ class MultiNorm:
         mean = mean1 + cov12 @ np.linalg.solve(cov22, values - mean2)
         cov = cov11 - cov12 @ np.linalg.solve(cov22, cov21)
 
-        return self.__class__(mean, cov, names)
+        return self.__class__(mean, cov)
 
     def fix(self, pars):
         """Fix parameters.
@@ -554,13 +507,12 @@ class MultiNorm:
         `MultiNorm`
         """
         # mask of parameters to keep (that are not fixed)
-        mask = np.invert(self._name_index.get_mask(pars))
-        names = self._name_index.get_names(mask)
+        mask = np.invert(self.make_index_mask(pars))
 
         mean = self.scipy.mean[mask]
         precision = self.precision[np.ix_(mask, mask)]
         cov = _matrix_inverse(precision)
-        return self.__class__(mean, cov, names)
+        return self.__class__(mean, cov)
 
     def sigma_distance(self, points):
         """Number of standard deviations from the mean.
@@ -639,52 +591,20 @@ class MultiNorm:
         """
         return np.atleast_2d(self.scipy.rvs(size, random_state))
 
-
-class _NameIndex:
-    """Parameter name index."""
-
-    def __init__(self, names, n):
-        if names is None:
-            names = [f"par_{idx}" for idx in range(n)]
-        else:
-            if len(names) != n:
-                raise ValueError(f"len(names) = {len(names)}, expected n={n}")
-
-        # TODO: change to Numpy array!
-        self.names = list(names)
-
-    def get_idx(self, pars):
-        """Create parameter index array.
-
-        Supports scalar, list and array input pars
-        Support parameter indices (int) and names (str)
+    def make_index_mask(self, pars):
+        """Make index mask.
+        TODO: document
         """
-        # TODO: should we support scalar?
-        # TODO: support `np.int32` also
-        if isinstance(pars, (int, str)):
-            pars = [pars]
+        if pars is None:
+            return np.ones(self.n, dtype=bool)
 
-        idxs = []
-        for par in pars:
-            # TODO: improve type handling (make str work on Python 2)
-            # and give good error messages
-            # Probably move this to a separate method.
-            if isinstance(par, int):
-                idxs.append(par)
-            elif isinstance(par, str):
-                idx = self.names.index(par)
-                idxs.append(idx)
-            else:
-                raise TypeError()
+        # pars = np.array(pars)
+        #
+        # if len(pars) != self.n:
+        #     raise ValueError()
 
-        return np.asarray(idxs, dtype=int)
+        # Defer to Numpy for indexing
+        mask = np.zeros(self.n, dtype=bool)
+        mask[pars] = True
 
-    def get_mask(self, pars):
-        idx = self.get_idx(pars)
-        mask = np.zeros(len(self.names), dtype=bool)
-        mask[idx] = True
         return mask
-
-    def get_names(self, mask):
-        # This works for an index array or mask for the selection
-        return list(np.array(self.names)[mask])

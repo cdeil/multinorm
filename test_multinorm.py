@@ -8,7 +8,6 @@ from multinorm import MultiNorm
 
 def assert_multinorm_allclose(a, b):
     """Assert that two `MultiNorm` objects are allclose."""
-    assert a.names == b.names
     assert_allclose(a.mean, b.mean)
     assert_allclose(a.cov, b.cov)
 
@@ -18,17 +17,16 @@ def mn1():
     """Example test case without correlations."""
     mean = [10, 20, 30]
     covariance = [[1, 0, 0], [0, 4, 0], [0, 0, 9]]
-    names = ["a", "b", "c"]
-    return MultiNorm(mean, covariance, names)
+    return MultiNorm(mean, covariance)
 
 
 @pytest.fixture()
 def mn2():
     """Example test case with correlations.
 
-    - [0, 1] = ["a", "b"] correlation: 0.89442719 (large correlation)
-    - [0, 2] = ["a", "c"] correlation: 0.0 (uncorrelated)
-    - [1, 2] = ["b", "c"] correlation: 0.12909944 (small correlation)
+    - [0, 1] correlation: 0.89442719 (large correlation)
+    - [0, 2] correlation: 0.0 (uncorrelated)
+    - [1, 2] correlation: 0.12909944 (small correlation)
 
     These are pretty much arbitrary numbers,
     when used in tests outputs will only establish
@@ -39,8 +37,7 @@ def mn2():
     """
     mean = [1, 3, 2]
     cov = [[1, 2, 0], [2, 5, 0.5], [0, 0.5, 3]]
-    names = ["a", "b", "c"]
-    return MultiNorm(mean, cov, names)
+    return MultiNorm(mean, cov)
 
 
 @pytest.fixture()
@@ -53,26 +50,21 @@ def mn3():
     """
     mean = np.array([1e-10, 1, 1e10])
     error = 1.0 * mean
-    names = ["a", "b", "c"]
-    return MultiNorm.from_error(mean, error, names=names)
+    return MultiNorm.from_error(mean, error)
 
 
 def test_init():
     mn = MultiNorm(mean=[1, 2])
-    assert mn.names == ["par_0", "par_1"]
+    # TODO: assert dtype = float64 for all properties
 
     mn = MultiNorm(cov=[[1, 0], [0, 1]])
-    assert mn.names == ["par_0", "par_1"]
 
-    mn = MultiNorm(names=["a"])
+    mn = MultiNorm()
     assert mn.mean.shape == (1,)
     assert mn.cov.shape == (1, 1)
 
-    mn = MultiNorm()
-    assert mn.names == ["par_0"]
-
     with pytest.raises(ValueError):
-        MultiNorm(mean=[0, 0, 0], names=["a", "b"])
+        MultiNorm(mean=[0, 0, 0], cov=[[1, 2], [3, 4]])
 
 
 def test_init_singular():
@@ -85,17 +77,13 @@ def test_init_singular():
 
 
 def test_str(mn1):
-    print(mn1)
-    assert (
-        str(mn1)
-        == """\
+    expected = """\
 MultiNorm with n=3 parameters:
-      mean  error
-name             
-a     10.0    1.0
-b     20.0    2.0
-c     30.0    3.0"""
-    )
+   mean  error
+0  10.0    1.0
+1  20.0    2.0
+2  30.0    3.0"""
+    assert str(mn1) == expected
 
 
 def test_eq(mn1):
@@ -109,11 +97,9 @@ def test_from_err():
     mean = [10, 20, 30]
     err = [1, 2, 3]
     correlation = None
-    names = ["a", "b", "c"]
-    mn = MultiNorm.from_error(mean, err, correlation, names)
+    mn = MultiNorm.from_error(mean, err, correlation)
     assert_allclose(mn.mean, mean)
     assert_allclose(mn.cov, [[1, 0, 0], [0, 4, 0], [0, 0, 9]])
-    assert mn.names == names
 
     # Test with given correlation
     correlation = [[1, 0.8, 0], [0.8, 1, 0.1], [0.0, 0.1, 1]]
@@ -126,33 +112,29 @@ def test_from_err():
 
 def test_from_samples():
     points = [(10, 20, 30), (12, 20, 30)]
-    names = ["a", "b", "c"]
-    mn = MultiNorm.from_samples(points, names)
+    mn = MultiNorm.from_samples(points)
 
-    assert mn.names == names
     assert_allclose(mn.mean, [11, 20, 30])
     assert_allclose(mn.cov, [[2, 0, 0], [0, 0, 0], [0, 0, 0]])
 
 
 def test_from_stack():
-    d1 = MultiNorm(mean=[1, 2], cov=np.full((2, 2), 2), names=["a", "b"])
-    d2 = MultiNorm(mean=[3, 4, 5], cov=np.full((3, 3), 3), names=["c", "d", "e"])
+    d1 = MultiNorm(mean=[1, 2], cov=np.full((2, 2), 2))
+    d2 = MultiNorm(mean=[3, 4, 5], cov=np.full((3, 3), 3))
 
     mn = MultiNorm.from_stack([d1, d2])
 
-    assert mn.names == ["a", "b", "c", "d", "e"]
     assert_allclose(mn.mean, [1, 2, 3, 4, 5])
     assert_allclose(mn.cov[0], [2, 2, 0, 0, 0])
     assert_allclose(mn.cov[4], [0, 0, 3, 3, 3])
 
 
 def test_from_product():
-    d1 = MultiNorm(mean=[0, 0], names=["a", "b"])
-    d2 = MultiNorm(mean=[2, 4], names=["a", "b"])
+    d1 = MultiNorm(mean=[0, 0])
+    d2 = MultiNorm(mean=[2, 4])
 
     mn = MultiNorm.from_product([d1, d2])
 
-    assert mn.names == ["a", "b"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[0.5, 0], [0, 0.5]])
 
@@ -177,10 +159,10 @@ def test_summary_dataframe(mn1):
 
     assert isinstance(df, pd.DataFrame)
     assert list(df.columns) == ["mean", "error", "lo", "hi"]
-    assert list(df.index) == ["a", "b", "c"]
+    assert list(df.index) == [0, 1, 2]
 
     # Access infos per parameter as Series
-    par = df.loc["c"]
+    par = df.iloc[2]
     assert isinstance(par, pd.Series)
     assert_allclose(par["mean"], 30)
     assert_allclose(par["error"], 3)
@@ -190,7 +172,7 @@ def test_summary_dataframe(mn1):
     # Access infos per quantity as Series
     mean = df["mean"]
     assert isinstance(mean, pd.Series)
-    assert_allclose(mean["c"], 30)
+    assert_allclose(mean[2], 30)
 
 
 def test_err(mn1, mn2):
@@ -227,43 +209,32 @@ def test_precision(mn1, mn2, mn3):
     assert_allclose(mn3.precision, expected)
 
 
-def test_drop(mn1):
-    assert mn1.drop("b") == mn1.marginal(["a", "c"])
-
-
 def test_marginal(mn1, mn2):
-    # Marginal distribution: subset of `cov`
     mn = mn1.marginal([0, 2])
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [10, 30])
     assert_allclose(mn.cov, [[1, 0], [0, 9]])
 
     mn = mn2.marginal([0, 2])
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[1, 0], [0, 3]])
 
 
 def test_conditional(mn1, mn2):
     mn = mn1.conditional(1, 20)
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [10, 30])
     assert_allclose(mn.cov, [[1, 0], [0, 9]])
 
     mn = mn2.conditional(1, 3)
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
 
 
 def test_fix(mn1, mn2, mn3):
     mn = mn1.fix(1)
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [10, 30])
     assert_allclose(mn.cov, [[1, 0], [0, 9]])
 
     mn = mn2.fix(1)
-    assert mn.names == ["a", "c"]
     assert_allclose(mn.mean, [1, 2])
     assert_allclose(mn.cov, [[0.2, -0.2], [-0.2, 2.95]])
     expected = [[5.363636, 0.363636], [0.363636, 0.363636]]
@@ -277,8 +248,7 @@ def test_fix(mn1, mn2, mn3):
 
 def test_conditional_vs_fix():
     # Conditional and fix should be the same (up to numerical errors)
-    n_par = 5
-    mn = MultiNorm.make_example(n_par=n_par)
+    mn = MultiNorm.make_example(n_par=5)
 
     a = mn.conditional([1, 2, 3])
     b = mn.fix([1, 2, 3])
@@ -344,7 +314,7 @@ def test_to_uncertainties(mn1):
 
 
 def test_error_ellipse(mn2):
-    ellipse = mn2.marginal(["a", "b"]).error_ellipse()
+    ellipse = mn2.marginal([0, 1]).error_ellipse()
     assert_allclose(ellipse["xy"], (1, 3))
     assert_allclose(ellipse["width"], 0.82842712)
     assert_allclose(ellipse["height"], 4.82842712)
@@ -352,7 +322,7 @@ def test_error_ellipse(mn2):
 
 
 def test_to_matplotlib_ellipse(mn1, mn2):
-    ellipse = mn1.marginal(["a", "b"]).to_matplotlib_ellipse()
+    ellipse = mn1.marginal([0, 1]).to_matplotlib_ellipse()
     assert_allclose(ellipse.center, (10, 20))
     assert_allclose(ellipse.width, 2)
     assert_allclose(ellipse.height, 4)
@@ -360,7 +330,7 @@ def test_to_matplotlib_ellipse(mn1, mn2):
     angle = np.abs(ellipse.angle - np.array([0, 180])).min()
     assert_allclose(angle, 0)
 
-    ellipse = mn2.marginal(["a", "b"]).to_matplotlib_ellipse()
+    ellipse = mn2.marginal([0, 1]).to_matplotlib_ellipse()
     assert_allclose(ellipse.center, (1, 3))
     assert_allclose(ellipse.width, 0.82842712)
     assert_allclose(ellipse.height, 4.82842712)
@@ -372,21 +342,10 @@ def test_to_matplotlib_ellipse(mn1, mn2):
 
 def test_to_xarray(mn1):
     data = mn1.to_xarray("pdf")
-    assert data.dims == ("a", "b", "c")
+    # TODO: assert on all properties
     assert_allclose(data.values[1, 2, 3], 4.20932837e-08)
 
 
-def test_name_index(mn1):
-    name_index = mn1._name_index
-    assert name_index.names == ["a", "b", "c"]
-    assert_equal(name_index.get_idx(["a", "c"]), [0, 2])
-    assert_equal(name_index.get_mask(["a", "c"]), [True, False, True])
-
-    with pytest.raises(ValueError):
-        name_index.get_idx(["a", "d"])
-
-    with pytest.raises(ValueError):
-        name_index.get_mask(["a", "d"])
-
-    with pytest.raises(TypeError):
-        name_index.get_mask([b"a"])
+def test_make_index_mask(mn1):
+    assert_equal(mn1.make_index_mask([0, 2]), [True, False, True])
+    assert_equal(mn1.make_index_mask([True, False, True]), [True, False, True])
