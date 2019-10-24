@@ -197,7 +197,7 @@ class MultiNorm:
         precision = np.sum(precisions, axis=0)
         cov = _matrix_inverse(precision)
 
-        means_weighted = [_._mean_weighted for _ in distributions]
+        means_weighted = [_.precision.values @ _.mean.values for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
         mean = cov @ means_weighted
         return cls(mean, cov, names)
@@ -359,7 +359,7 @@ class MultiNorm:
         """
         # See https://stackoverflow.com/questions/12301071
         xy = self.scipy.mean
-        vals, vecs = self._eigh
+        vals, vecs = eigh(self.scipy.cov)
         width, height = 2 * n_sigma * np.sqrt(vals)
         angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
         return {"xy": xy, "width": width, "height": height, "angle": angle}
@@ -396,16 +396,6 @@ class MultiNorm:
         ax = plt.gca() if ax is None else ax
         ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
         ax.add_artist(ellipse)
-
-    @property
-    def _eigh(self):
-        # TODO: can this be computed from `self.scipy.cov_info.U`?
-        # TODO: expose covar eigenvalues and vectors?
-        return eigh(self.scipy.cov)
-
-    @property
-    def _mean_weighted(self):
-        return self.precision.values @ self.mean.values
 
     @property
     def n(self):
