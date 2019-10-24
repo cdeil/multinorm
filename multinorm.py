@@ -91,7 +91,7 @@ class MultiNorm:
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        return np.sqrt(np.diag(self.scipy.cov))
+        return np.sqrt(np.diag(self.cov))
 
     @property
     def correlation(self):
@@ -112,7 +112,7 @@ class MultiNorm:
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        return _matrix_inverse(self.scipy.cov)
+        return _matrix_inverse(self.cov)
 
     @property
     def scipy(self):
@@ -320,7 +320,7 @@ class MultiNorm:
         """
         from uncertainties import correlated_values
 
-        return correlated_values(self.scipy.mean, self.scipy.cov)
+        return correlated_values(self.mean, self.cov)
 
     def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
         """Make image of the distribution (`xarray.DataArray`).
@@ -386,11 +386,11 @@ class MultiNorm:
             Keys "xy" (center, tuple), and floats  "width", "height", "angle"
         """
         # See https://stackoverflow.com/questions/12301071
-        xy = self.scipy.mean
-        vals, vecs = eigh(self.scipy.cov)
+        vals, vecs = eigh(self.cov)
         width, height = 2 * n_sigma * np.sqrt(vals)
         angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
-        return {"xy": xy, "width": width, "height": height, "angle": angle}
+
+        return {"xy": self.mean, "width": width, "height": height, "angle": angle}
 
     def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
         """Create error ellipse (`matplotlib.patches.Ellipse`).
@@ -440,8 +440,8 @@ class MultiNorm:
         `MultiNorm`
         """
         mask = self.make_index_mask(pars)
-        mean = self.scipy.mean[mask]
-        cov = self.scipy.cov[np.ix_(mask, mask)]
+        mean = self.mean[mask]
+        cov = self.cov[np.ix_(mask, mask)]
         return self.__class__(mean, cov)
 
     def conditional(self, pars, values=None):
@@ -474,18 +474,17 @@ class MultiNorm:
         mask1 = np.invert(mask2)
 
         if values is None:
-            values = self.scipy.mean[mask2]
+            values = self.mean[mask2]
         else:
             values = np.asarray(values, dtype=float)
 
-        # TODO: change most self.scipy.mean -> self.mean and also for cov
-        mean1 = self.scipy.mean[mask1]
-        mean2 = self.scipy.mean[mask2]
+        mean1 = self.mean[mask1]
+        mean2 = self.mean[mask2]
 
-        cov11 = self.scipy.cov[np.ix_(mask1, mask1)]
-        cov12 = self.scipy.cov[np.ix_(mask1, mask2)]
-        cov21 = self.scipy.cov[np.ix_(mask2, mask1)]
-        cov22 = self.scipy.cov[np.ix_(mask2, mask2)]
+        cov11 = self.cov[np.ix_(mask1, mask1)]
+        cov12 = self.cov[np.ix_(mask1, mask2)]
+        cov21 = self.cov[np.ix_(mask2, mask1)]
+        cov22 = self.cov[np.ix_(mask2, mask2)]
 
         mean = mean1 + cov12 @ np.linalg.solve(cov22, values - mean2)
         cov = cov11 - cov12 @ np.linalg.solve(cov22, cov21)
@@ -509,7 +508,7 @@ class MultiNorm:
         # mask of parameters to keep (that are not fixed)
         mask = np.invert(self.make_index_mask(pars))
 
-        mean = self.scipy.mean[mask]
+        mean = self.mean[mask]
         precision = self.precision[np.ix_(mask, mask)]
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov)

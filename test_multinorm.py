@@ -53,16 +53,27 @@ def mn3():
     return MultiNorm.from_error(mean, error)
 
 
-def test_init():
+@pytest.mark.parametrize("dtype", ["int8", "float32"])
+def test_init_dtype(dtype):
+    # Make sure we always get float64 and good precision
+    mn = MultiNorm(np.zeros(2, dtype=dtype), np.eye(2, dtype=dtype))
+    assert mn.mean.dtype == np.float64
+    assert mn.cov.dtype == np.float64
+
+
+def test_init_partially():
     mn = MultiNorm(mean=[1, 2])
-    # TODO: assert dtype = float64 for all properties
+    assert_allclose(mn.error, [0, 0])
 
     mn = MultiNorm(cov=[[1, 0], [0, 1]])
+    assert mn.mean == [0, 0]
 
+def test_init_empty():
     mn = MultiNorm()
     assert mn.mean.shape == (1,)
     assert mn.cov.shape == (1, 1)
 
+def test_init_bad():
     with pytest.raises(ValueError):
         MultiNorm(mean=[0, 0, 0], cov=[[1, 2], [3, 4]])
 
@@ -175,7 +186,7 @@ def test_summary_dataframe(mn1):
     assert_allclose(mean[2], 30)
 
 
-def test_err(mn1, mn2):
+def test_error(mn1, mn2):
     error = mn1.error
     assert isinstance(error, np.ndarray)
     assert error.shape == (3,)
