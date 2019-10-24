@@ -136,8 +136,8 @@ def test_from_stack():
 
     assert mn.names == ["a", "b", "c", "d", "e"]
     assert_allclose(mn.mean, [1, 2, 3, 4, 5])
-    assert_allclose(mn.cov.values[0], [2, 2, 0, 0, 0])
-    assert_allclose(mn.cov.values[4], [0, 0, 3, 3, 3])
+    assert_allclose(mn.cov[0], [2, 2, 0, 0, 0])
+    assert_allclose(mn.cov[4], [0, 0, 3, 3, 3])
 
 
 def test_from_product():
@@ -186,18 +186,22 @@ def test_parameters(mn1):
 
 
 def test_err(mn1, mn2):
-    assert_allclose(mn1.err, [1, 2, 3])
+    err = mn1.err
+    assert isinstance(err, np.ndarray)
+    assert err.shape == (3,)
+    assert_allclose(err, [1, 2, 3])
+
     assert_allclose(mn2.err, [1.0, 2.23606798, 1.73205081])
 
 
 def test_correlation(mn1, mn2):
     expected = np.eye(3)
-    assert_allclose(mn1.correlation.values, expected)
+    assert_allclose(mn1.correlation, expected)
 
     c = mn2.correlation
-    assert_allclose(c.iloc[0, 1], 0.89442719)
-    assert_allclose(c.iloc[0, 2], 0)
-    assert_allclose(c.iloc[1, 2], 0.12909944)
+    assert_allclose(c[0, 1], 0.89442719)
+    assert_allclose(c[0, 2], 0)
+    assert_allclose(c[1, 2], 0.12909944)
 
 
 def test_precision(mn1, mn2, mn3):

@@ -193,11 +193,11 @@ class MultiNorm:
         """
         names = distributions[0].names
 
-        precisions = [_.precision.values for _ in distributions]
+        precisions = [_.precision for _ in distributions]
         precision = np.sum(precisions, axis=0)
         cov = _matrix_inverse(precision)
 
-        means_weighted = [_.precision.values @ _.mean.values for _ in distributions]
+        means_weighted = [_.precision @ _.mean for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
         mean = cov @ means_weighted
         return cls(mean, cov, names)
@@ -267,16 +267,6 @@ class MultiNorm:
         data = {"lo": self.mean - d, "hi": self.mean + d}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
-
-    def _pandas_series(self, data, name):
-        import pandas as pd
-        index = pd.Index(self.names, name="name")
-        return pd.Series(data, index, name=name)
-
-    def _pandas_matrix(self, matrix):
-        import pandas as pd
-        index = pd.Index(self.names, name="name")
-        return pd.DataFrame(matrix, index, index)
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
@@ -404,13 +394,13 @@ class MultiNorm:
 
     @property
     def mean(self):
-        """Mean vector (`pandas.Series`)."""
-        return self._pandas_series(self.scipy.mean, "mean")
+        """Parameter mean values (`numpy.ndarray`)."""
+        return self.scipy.mean
 
     @property
     def cov(self):
-        """Covariance matrix (`pandas.DataFrame`)."""
-        return self._pandas_matrix(self.scipy.cov)
+        """Covariance matrix (`numpy.ndarray`)."""
+        return self.scipy.cov
 
     @property
     def names(self):
@@ -418,39 +408,33 @@ class MultiNorm:
         return self._name_index.names
 
     @property
-    def _err(self):
-        return np.sqrt(np.diag(self.scipy.cov))
-
-    @property
     def err(self):
-        r"""Error vector (`pandas.DataFrame`).
+        r"""Parameter errors (`numpy.ndarray`).
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
         """
-        return self._pandas_series(self._err, "err")
+        return np.sqrt(np.diag(self.scipy.cov))
 
     @property
     def correlation(self):
-        r"""Correlation matrix (`pandas.DataFrame`).
+        r"""Correlation matrix (`numpy.ndarray`).
 
         Correlation :math:`C` is related to covariance :math:`\Sigma` via:
 
         .. math::
             C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
         """
-        c = self.cov / np.outer(self.err, self.err)
-        return self._pandas_matrix(c)
+        return self.cov / np.outer(self.err, self.err)
 
     @property
     def precision(self):
-        """Precision matrix (`pandas.DataFrame`).
+        """Precision matrix (`numpy.ndarray`).
 
         The inverse of the covariance matrix.
 
         Sometimes called the "information matrix" or "Hesse matrix".
         """
-        matrix = _matrix_inverse(self.scipy.cov)
-        return self._pandas_matrix(matrix)
+        return _matrix_inverse(self.scipy.cov)
 
     def drop(self, pars):
         """Drop parameters.
@@ -565,7 +549,7 @@ class MultiNorm:
         names = self._name_index.get_names(mask)
 
         mean = self.scipy.mean[mask]
-        precision = self.precision.values[np.ix_(mask, mask)]
+        precision = self.precision[np.ix_(mask, mask)]
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
@@ -587,8 +571,8 @@ class MultiNorm:
         """
         # https://stackoverflow.com/questions/27686240/calculate-mahalanobis-distance-using-numpy-only
         points = np.atleast_2d(points)
-        d = self.mean.values - points
-        d2 = np.einsum('nj,jk,nk->n', d, self.precision.values, d)
+        d = self.mean - points
+        d2 = np.einsum('nj,jk,nk->n', d, self.precision, d)
         return np.sqrt(np.squeeze(d2))
 
     def pdf(self, points):
