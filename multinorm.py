@@ -133,7 +133,7 @@ class MultiNorm:
         Parameters
         ----------
         samples : numpy.ndarray
-            Array of data points with shape ``(n, 2)``.
+            Array of data points with shape ``(n_samples, n_par)``.
         names : list
             Parameter names
 
@@ -203,7 +203,7 @@ class MultiNorm:
         return cls(mean, cov, names)
 
     @classmethod
-    def make_example(cls, n_par=3, n_fix=0, random_state=42):
+    def make_example(cls, n_par=3, n_fix=0, random_state=0):
         """Create `MultiNorm` example for testing.
 
         This is a factory method that allows the quick creation
@@ -218,7 +218,7 @@ class MultiNorm:
         n_fix : int
             Number of fixed parameters in addition to ``n_par``.
         random_state :
-            Seed (int) - default: 42
+            Seed (int) - default: 0
             Put ``None`` to choose random seed.
             Can also pass `numpy.random.mtrand.RandomState` object.
 
@@ -580,10 +580,20 @@ class MultiNorm:
         return self.__class__(mean, cov, names)
 
     def sigma_distance(self, points):
-        """Number of standard deviations from the mean (`float`).
+        """Number of standard deviations from the mean.
 
         Also called the Mahalanobis distance.
         See :ref:`theory_sigmas`.
+
+        Parameters
+        ----------
+        points : numpy.ndarray
+            Point coordinates, 2-dim, shape ``(n_points, n_par)``.
+
+        Returns
+        -------
+        `numpy.ndarray`
+            1-dim, shape ``(n_points,)``
         """
         # https://stackoverflow.com/questions/27686240/calculate-mahalanobis-distance-using-numpy-only
         points = np.atleast_2d(points)
@@ -594,21 +604,55 @@ class MultiNorm:
     def pdf(self, points):
         """Probability density function.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls ``pdf`` method of `scipy.stats.multivariate_normal`.
+
+        Parameters
+        ----------
+        points : numpy.ndarray
+            Point coordinates, 2-dim, shape ``(n_points, n_par)``.
+
+        Returns
+        -------
+        `numpy.ndarray`
+            1-dim, shape ``(n_points,)``
         """
         return self.scipy.pdf(points)
 
     def logpdf(self, points):
         """Natural log of PDF.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls ``logpdf`` method of `scipy.stats.multivariate_normal`.
+
+        Parameters
+        ----------
+        points : numpy.ndarray
+            Point coordinates, 2-dim, shape ``(n_points, n_par)``.
+
+        Returns
+        -------
+        `numpy.ndarray`
+            1-dim, shape ``(n_points,)``
         """
         return self.scipy.logpdf(points)
 
     def sample(self, size=1, random_state=None):
         """Draw random samples.
 
-        Calls `scipy.stats.multivariate_normal`.
+        Calls ``rvs`` methods of `scipy.stats.multivariate_normal`
+
+        Parameters
+        ----------
+        size : int
+            Numpy of samples to draw
+        random_state :
+            Seed (int) - default: 0
+            Put ``None`` to choose random seed.
+            Can also pass `numpy.random.mtrand.RandomState` object.
+
+        Returns
+        -------
+        points : numpy.ndarray
+            Point coordinates, 2-dim, shape ``(n_points, n_par)``.
         """
         return self.scipy.rvs(size, random_state)
 
