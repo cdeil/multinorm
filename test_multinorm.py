@@ -63,10 +63,10 @@ def test_init_dtype(dtype):
 
 def test_init_partially():
     mn = MultiNorm(mean=[1, 2])
-    assert_allclose(mn.error, [0, 0])
+    assert_allclose(mn.error, [1, 1])
 
     mn = MultiNorm(cov=[[1, 0], [0, 1]])
-    assert mn.mean == [0, 0]
+    assert_allclose(mn.mean, [0, 0])
 
 def test_init_empty():
     mn = MultiNorm()

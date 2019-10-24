@@ -473,21 +473,19 @@ class MultiNorm:
         mask2 = self.make_index_mask(pars)
         mask1 = np.invert(mask2)
 
-        if values is None:
-            values = self.mean[mask2]
-        else:
-            values = np.asarray(values, dtype=float)
-
-        mean1 = self.mean[mask1]
-        mean2 = self.mean[mask2]
-
         cov11 = self.cov[np.ix_(mask1, mask1)]
         cov12 = self.cov[np.ix_(mask1, mask2)]
         cov21 = self.cov[np.ix_(mask2, mask1)]
         cov22 = self.cov[np.ix_(mask2, mask2)]
-
-        mean = mean1 + cov12 @ np.linalg.solve(cov22, values - mean2)
         cov = cov11 - cov12 @ np.linalg.solve(cov22, cov21)
+
+        if values is None:
+            values = self.mean[mask2]
+        else:
+            values = np.asarray(values, dtype=float)
+        mean1 = self.mean[mask1]
+        mean2 = self.mean[mask2]
+        mean = mean1 + cov12 @ np.linalg.solve(cov22, values - mean2)
 
         return self.__class__(mean, cov)
 
