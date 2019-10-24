@@ -13,7 +13,7 @@ Please give feedback to help make it better!
 Github
 ------
 
-Contributions to `multinorm` are welcome any time
+Contributions to ``multinorm`` are welcome any time
 on Github: https://github.com/cdeil/multinorm
 
 - If you find an issue, please file a bug report.

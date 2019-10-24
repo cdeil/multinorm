@@ -11,7 +11,6 @@ A Python class to work with model fit results
 """
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
-import pandas as pd
 from scipy.linalg import eigh, block_diag
 from scipy.stats import multivariate_normal
 
@@ -43,9 +42,6 @@ class MultiNorm:
     - Tutorial Jupyter notebook: `multinorm.ipynb`_
     - Documentation: :ref:`gs`, :ref:`create`, :ref:`analyse`
     - Equations and statistics: :ref:`theory`
-
-    Note that MultiNorm objects are read-only.
-    If you need to modify values, make a new `MultiNorm` object.
 
     Parameters
     ----------
@@ -85,15 +81,14 @@ class MultiNorm:
         r"""Create `MultiNorm` from parameter errors.
 
         With errors :math:`\sigma_i` this will create a
-        diagonal covariance matrix with
+        diagonal covariance matrix with :math:`\Sigma_{ii} = \sigma_i^2`.
 
-        .. math::
-            \Sigma_{ii} = \sigma_i^2
-
-        For a given ``correlation``, or in general: this will create
-        a `MultiNormal` with a covariance matrix such that it's
-        ``err`` and ``correlation`` match the one specified here
+        For a given `correlation`, or in general, this will create
+        a `MultiNorm` with a covariance matrix such that it's
+        `err` and `correlation` match the one specified here
         (up to rounding errors).
+
+        See :ref:`create_from_fit` and :ref:`create_from_pub`.
 
         Parameters
         ----------
@@ -105,6 +100,10 @@ class MultiNorm:
             Correlation matrix
         names : list
             Parameter names
+
+        Returns
+        -------
+        `MultiNorm`
         """
         if err is None:
             raise ValueError("Must set err parameter")
@@ -122,29 +121,33 @@ class MultiNorm:
         return cls(mean, cov, names)
 
     @classmethod
-    def from_samples(cls, points, names=None):
-        """Create `MultiNorm` from parameter points.
+    def from_samples(cls, samples, names=None):
+        """Create `MultiNorm` from parameter samples.
 
-        Usually the points are samples from some distribution
+        Usually the samples are from some distribution
         and creating this `MultiNorm` distribution is an
         estimate / approximation of that distribution of interest.
 
-        See: :ref:`create_from_samples`.
+        See :ref:`create_from_samples`.
 
         Parameters
         ----------
-        points : numpy.ndarray
+        samples : numpy.ndarray
             Array of data points with shape ``(n, 2)``.
         names : list
             Parameter names
+
+        Returns
+        -------
+        `MultiNorm`
         """
-        mean = np.mean(points, axis=0)
-        cov = np.cov(points, rowvar=False)
+        mean = np.mean(samples, axis=0)
+        cov = np.cov(samples, rowvar=False)
         return cls(mean, cov, names)
 
     @classmethod
     def from_stack(cls, distributions):
-        """Create `MultiNorm` as stacked distributions.
+        """Create `MultiNorm` by stacking distributions.
 
         Stacking means the ``names`` and ``mean`` vectors
         are concatenated, and the ``cov`` matrices are
@@ -163,8 +166,7 @@ class MultiNorm:
 
         Returns
         -------
-        MultiNorm
-            Stacked distribution
+        `MultiNorm`
         """
         names = np.concatenate([_.names for _ in distributions])
         cov = block_diag(*[_.cov for _ in distributions])
@@ -173,12 +175,12 @@ class MultiNorm:
 
     @classmethod
     def from_product(cls, distributions):
-        """Create `MultiNorm` as product distribution.
+        """Create `MultiNorm` product distribution.
 
         This represents the joint likelihood distribution, assuming
         the individual distributions are from independent measurements.
 
-        See :ref:`create_from_product` and :ref:`theory_product` .
+        See :ref:`create_from_product` and :ref:`theory_product`.
 
         Parameters
         ----------
@@ -187,8 +189,7 @@ class MultiNorm:
 
         Returns
         -------
-        MultiNorm
-            Product distribution
+        `MultiNorm`
         """
         names = distributions[0].names
 
@@ -203,10 +204,10 @@ class MultiNorm:
 
     @classmethod
     def make_example(cls, n_par=3, n_fix=0, random_state=42):
-        """Create example `MultiNorm` for testing.
+        """Create `MultiNorm` example for testing.
 
         This is a factory method that allows the quick creation
-        of example `MultiNormal` with any number of parameters for testing.
+        of example `MultiNorm` with any number of parameters for testing.
 
         See: :ref:`create_make_example`.
 
@@ -215,12 +216,15 @@ class MultiNorm:
         n_par : int
             Number of parameters
         n_fix : int
-            Number of fixed parameters
-            in addition to ``n_par``.
+            Number of fixed parameters in addition to ``n_par``.
         random_state :
             Seed (int) - default: 42
             Put ``None`` to choose random seed.
-            Can also pass `numpy.random.RandomState` object.
+            Can also pass `numpy.random.mtrand.RandomState` object.
+
+        Returns
+        -------
+        `MultiNorm`
         """
         n = n_par + n_fix
         rng = np.random.RandomState(random_state)
@@ -236,7 +240,7 @@ class MultiNorm:
 
     @property
     def scipy(self):
-        """Frozen `scipy.stats.multivariate_normal`_ distribution object.
+        """Scipy representation (`scipy.stats.multivariate_normal`).
 
         Used for many computations internally.
         """
@@ -248,6 +252,7 @@ class MultiNorm:
 
         Index is "name", columns are "mean" and "err"
         """
+        import pandas as pd
         data = {"mean": self.mean, "err": self.err}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
@@ -257,55 +262,61 @@ class MultiNorm:
 
         Index is "name", columns are "lo" and "hi"
         """
+        import pandas as pd
         d = n_sigma * self.err
         data = {"lo": self.mean - d, "hi": self.mean + d}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
 
     def _pandas_series(self, data, name):
+        import pandas as pd
         index = pd.Index(self.names, name="name")
         return pd.Series(data, index, name=name)
 
     def _pandas_matrix(self, matrix):
-        # We use the same index object for rows and columns
+        import pandas as pd
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(matrix, index, index)
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
 
-        A tuple of numbers with uncertainties
-        (one for each parameter) is returned.
-
         The `uncertainties`_ package makes it easy to
         do error propagation on derived quantities.
 
-        See examples in :ref:`analyse`.
+        See :ref:`analyse-error`.
+
+        Returns
+        -------
+        tuple (length ``n``) of ``uncertainties.core.AffineScalarFunc``
         """
         from uncertainties import correlated_values
 
         return correlated_values(self.scipy.mean, self.scipy.cov, self.names)
 
     def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
-        """Make an `xarray.DataArray` raster image.
+        """Make image of the distribution (`xarray.DataArray`).
 
-        This is mostly useful for visualisation.
-
-        All computations can be done without this image.
-
-        TODO: document better
-
-        TODO: add "pmf" option with integral probabilities per pixel
+        This is mostly useful for visualisation, not used by other methods.
 
         Parameters
         ----------
         fcn : str
-            Function to compute data values.
-            Choices: "pdf", "logpdf", "stat", "sigma"
+            Function to compute data values. Choices:
+
+            - "pdf" (`pdf`)
+            - "logpdf" (`logpdf`)
+            - "stat" (``-2 * logpdf``)
+            - "sigma" (`sigma_distance`)
+
         n_sigma : int
             Number of standard deviations. Controls image coordinate range.
         num : int
             Number of pixels in each dimension. Controls image resolution.
+
+        Returns
+        -------
+        `xarray.DataArray`
         """
         from xarray import DataArray
 
@@ -331,15 +342,41 @@ class MultiNorm:
 
         return DataArray(data, coords, self.names)
 
-    def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
-        """Create `matplotlib.patches.Ellipse`_.
+    def error_ellipse(self, n_sigma=1):
+        """Error ellipse parameters.
 
-        See examples in :ref:`plot`.
+        TODO: document formulae and give example in the docs.
 
         Parameters
         ----------
         n_sigma : int
             Number of standard deviations. See :ref:`theory_sigmas`.
+
+        Returns
+        -------
+        dict
+            Keys "xy" (center, tuple), and floats  "width", "height", "angle"
+        """
+        # See https://stackoverflow.com/questions/12301071
+        xy = self.scipy.mean
+        vals, vecs = self._eigh
+        width, height = 2 * n_sigma * np.sqrt(vals)
+        angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
+        return {"xy": xy, "width": width, "height": height, "angle": angle}
+
+    def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
+        """Create error ellipse (`matplotlib.patches.Ellipse`).
+
+        See :ref:`plot`.
+
+        Parameters
+        ----------
+        n_sigma : int
+            Number of standard deviations. See :ref:`theory_sigmas`.
+
+        Returns
+        -------
+        `matplotlib.patches.Ellipse`
         """
         if self.n != 2:
             raise ValueError(
@@ -349,17 +386,9 @@ class MultiNorm:
 
         from matplotlib.patches import Ellipse
 
-        ellipse = self._compute_ellipse(n_sigma)
+        ellipse = self.error_ellipse(n_sigma)
 
         return Ellipse(**ellipse, **kwargs)
-
-    def _compute_ellipse(self, n_sigma=1):
-        # See https://stackoverflow.com/questions/12301071
-        xy = self.scipy.mean
-        vals, vecs = self._eigh
-        width, height = 2 * n_sigma * np.sqrt(vals)
-        angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
-        return {"xy": xy, "width": width, "height": height, "angle": angle}
 
     def plot(self, ax=None, n_sigma=1, **kwargs):
         import matplotlib.pyplot as plt
@@ -380,10 +409,7 @@ class MultiNorm:
 
     @property
     def n(self):
-        """Number of dimensions of the distribution (int).
-
-        Given by the number of parameters.
-        """
+        """Number of dimensions (`int`)."""
         return self.scipy.dim
 
     @property
@@ -442,7 +468,7 @@ class MultiNorm:
         This simply removes the entry from the `mean` vector,
         and the corresponding column and row from the `cov` matrix.
 
-        The computation is the same as :meth:`MultiNorm.marginal`,
+        The computation is the same as `MultiNorm.marginal`,
         only here the parameters to drop are given, and there
         the parameters to keep are given.
 
@@ -450,12 +476,16 @@ class MultiNorm:
         ----------
         pars : list
             Parameters to fix (indices or names)
+
+        Returns
+        -------
+        `MultiNorm`
         """
         mask = np.invert(self._name_index.get_mask(pars))
         return self._subset(mask)
 
     def marginal(self, pars):
-        """Marginal `MultiNormal` distribution.
+        """Marginal distribution.
 
         See :ref:`theory_marginal`.
 
@@ -466,8 +496,7 @@ class MultiNorm:
 
         Returns
         -------
-        MultiNorm
-            Marginal distribution
+        `MultiNorm`
         """
         mask = self._name_index.get_mask(pars)
         return self._subset(mask)
@@ -479,7 +508,7 @@ class MultiNorm:
         return self.__class__(mean, cov, names)
 
     def conditional(self, pars, values=None):
-        """Conditional `MultiNormal` distribution.
+        """Conditional `MultiNorm` distribution.
 
         Resulting lower-dimensional distribution obtained
         by fixing ``pars`` to ``values``. The output
@@ -498,8 +527,7 @@ class MultiNorm:
 
         Returns
         -------
-        MultiNorm
-            Conditional distribution
+        `MultiNorm`
         """
         # The following code follows the formulae from
         # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
@@ -537,6 +565,10 @@ class MultiNorm:
         ----------
         pars : list
             Parameters to fix (indices or names)
+
+        Returns
+        -------
+        `MultiNorm`
         """
         # mask of parameters to keep (that are not fixed)
         mask = np.invert(self._name_index.get_mask(pars))
@@ -548,7 +580,7 @@ class MultiNorm:
         return self.__class__(mean, cov, names)
 
     def sigma_distance(self, point):
-        """Number of standard deviations from the mean (float).
+        """Number of standard deviations from the mean (`float`).
 
         Also called the Mahalanobis distance.
         See :ref:`theory_sigmas`.
@@ -561,21 +593,21 @@ class MultiNorm:
     def pdf(self, points):
         """Probability density function.
 
-        Calls `scipy.stats.multivariate_normal`_.
+        Calls `scipy.stats.multivariate_normal`.
         """
         return self.scipy.pdf(points)
 
     def logpdf(self, points):
         """Natural log of PDF.
 
-        Calls `scipy.stats.multivariate_normal`_.
+        Calls `scipy.stats.multivariate_normal`.
         """
         return self.scipy.logpdf(points)
 
     def sample(self, size=1, random_state=None):
         """Draw random samples.
 
-        Calls `scipy.stats.multivariate_normal`_.
+        Calls `scipy.stats.multivariate_normal`.
         """
         return self.scipy.rvs(size, random_state)
 

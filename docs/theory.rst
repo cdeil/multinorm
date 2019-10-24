@@ -118,7 +118,7 @@ via the inverse Hessian:
 Marginal distribution
 ---------------------
 
-The marginal distribution can be obtained with the :meth:`~MultiNorm.marginal` method.
+The marginal distribution can be obtained with the `MultiNorm.marginal` method.
 
 You can think of the `marginal distribution`_ as the distribution obtained
 by simply ignoring some of the parameters, or by "projecting" the :math:`N`-dimensional
@@ -136,7 +136,7 @@ See `here <https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Margin
 Conditional distribution
 ------------------------
 
-The conditional distribution can be obtained with the :meth:`~MultiNorm.conditional` method.
+The conditional distribution can be obtained with the `MultiNorm.conditional` method.
 
 The `conditional distribution`_ is given by the "slice" in the :math:`N`-dimensional
 distribution when fixing some of the parameters.
@@ -158,7 +158,7 @@ Fix parameters
 This method is used e.g. in MINUIT, see Section 1.3.1 here:
 http://lmu.web.psi.ch/docu/manuals/software_manuals/minuit2/mnerror.pdf
 
-As far as I can tell, it gives the same results as conditional (see `test_conditional_vs_fix`).
+As far as I can tell, it gives the same results as conditional (see ``test_conditional_vs_fix``).
 
 TODO: work out the math of why that is the case and document it here.
 
@@ -171,7 +171,7 @@ TODO: document and make example in the analyse section using iminuit.
 Stacked distribution
 --------------------
 
-TODO: document :meth:`MultiNorm.from_stack`
+TODO: document `MultiNorm.from_stack`
 
 .. _theory_product:
 

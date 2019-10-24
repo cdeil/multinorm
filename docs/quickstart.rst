@@ -14,7 +14,7 @@ Getting started
 Import
 ------
 
-The `multinorm` package offers a single class :class:`MultiNorm`,
+The ``multinorm`` package offers a single class `MultiNorm`,
 so you always start like this::
 
     from multinorm import MultiNorm
@@ -40,7 +40,7 @@ and you would define them in Python code as shown here, or read them from a file
 However, often you obtain these values as the result of a fit of a parametrised
 model to data, or estimate them in some other way.
 
-Further examples to create :class:`MultiNorm` objects are here: :ref:`create`
+Further examples to create `MultiNorm` objects are here: :ref:`create`
 
 Read only
 ---------
@@ -56,7 +56,7 @@ TODO: make read-only as much as possible, the document remaining caveats!
 Analyse
 -------
 
-Once you have a :class:`MultiNorm` object representing a multivariate normal distribution,
+Once you have a `MultiNorm` object representing a multivariate normal distribution,
 you can access the following properties and methods to analyse it.
 
 The object repr only shows the number of dimensions (number of parameters)
@@ -106,19 +106,19 @@ The ``mean`` is a 1-dimensional array, and ``cov`` is a 2-dimensional array:
     >>> mn.cov.shape
     (3, 3)
 
-Parameter error vector :meth:`~MultiNorm.err`::
+Parameter error vector `MultiNorm.err`::
 
     >>> mn.err
     array([1., 2., 3.])
 
-Precision matrix (the inverse covariance) :meth:`~MultiNorm.precision`:
+Precision matrix (the inverse covariance) `MultiNorm.precision`:
 
     >>> mn.precision
     array([[1.        , 0.        , 0.        ],
            [0.        , 0.25      , 0.        ],
            [0.        , 0.        , 0.11111111]])
 
-Correlation matrix :meth:`~MultiNorm.correlation`:
+Correlation matrix `MultiNorm.correlation`:
 
     >>> mn.correlation
     array([[1., 0., 0.],
@@ -128,20 +128,20 @@ Correlation matrix :meth:`~MultiNorm.correlation`:
 These are just the basic attributes and properties.
 
 We continue with this example on the :ref:`analyse` page and show
-how to really do some analysis with :class:`MultiNorm` objects and methods.
+how to really do some analysis with `MultiNorm` objects and methods.
 
 .. _gs_plot:
 
 Plot
 ----
 
-Plot ellipse using :meth:`~MultiNorm.to_matplotlib_ellipse`::
+Plot ellipse using `MultiNorm.to_matplotlib_ellipse`::
 
     import matplotlib.pyplot as plt
     mn2 = mn.marginal()
     mn2.plot()
 
-Further examples to plot :class:`MultiNorm` objects are here: :ref:`plot`
+Further examples to plot `MultiNorm` objects are here: :ref:`plot`
 
 What next?
 ----------
@@ -150,7 +150,7 @@ The :ref:`create`, :ref:`analyse` and :ref:`plot` tutorial pages contain
 further examples. The :ref:`theory` and :ref:`ref` pages contain background
 information and definitions, as well as links to other documents and codes.
 
-The full API documentation is here: :class:`MultiNorm`.
+The full API documentation is here: `MultiNorm`.
 Note that you can click on "source" on the right for any method or property,
 and read the implementation to see what exactly it does.
 It's usually a few lines of straightforward code using Python and Numpy,

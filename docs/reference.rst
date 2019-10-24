@@ -32,10 +32,8 @@ Codes
 Other codes related to multivariate normal distributions:
 
 - `Wolfram MultinormalDistribution`_
-- `numpy.random.multivariate_normal`_
-- `scipy.stats.multivariate_normal`_
+- `numpy.random.Generator.multivariate_normal`
+- `scipy.stats.multivariate_normal`
 - `sklearn.covariance`_
 - `uncertainties`_
 - `statsmodels`_
-
-

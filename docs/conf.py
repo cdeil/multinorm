@@ -170,14 +170,20 @@ texinfo_documents = [
 intersphinx_mapping = {
     "https://docs.python.org/": None,
     "https://docs.scipy.org/doc/numpy/": None,
+    "https://docs.scipy.org/doc/scipy/reference/": None,
+    "https://dev.pandas.io/docs/": None,
+    "http://xarray.pydata.org/en/stable/": None,
+    "https://matplotlib.org/": None,
 }
 
 # This is to get rid of incorrect Sphinx warnings from classmethods
 # See https://stackoverflow.com/questions/12206334
-numpydoc_show_class_members = False
+# numpydoc_show_class_members = False
 
+# https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html#configuration
+napoleon_google_docstring = False
 napoleon_use_rtype = False
 
 html_show_sphinx = False
-
 nitpicky = True
+default_role = "py:obj"

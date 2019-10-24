@@ -7,10 +7,7 @@
 .. _conditional distribution: https://en.wikipedia.org/wiki/Conditional_probability_distribution
 .. _stats book: https://press.princeton.edu/titles/10159.html
 .. _numpy: https://docs.scipy.org/doc/numpy/reference/
-.. _numpy.random.multivariate_normal: https://docs.scipy.org/doc/numpy/reference/generated/numpy.random.multivariate_normal.html
 .. _scipy: https://docs.scipy.org/doc/scipy/reference/
-.. _scipy.stats.multivariate_normal: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.multivariate_normal.html
-.. _scipy.optimize_curve_fit: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
 .. _pandas: https://pandas.pydata.org/
 .. _matplotlib.patches.Ellipse: https://matplotlib.org/api/_as_gen/matplotlib.patches.Ellipse.html
 .. _sklearn.covariance: http://scikit-learn.org/stable/modules/covariance.html

@@ -21,15 +21,15 @@ On this page, we look at the most common scenarios.
 
 .. _create_from_fit:
 
-From fit
---------
+Create from fit
+---------------
 
-TODO: show example using scipy.optimise.curve_fit`
+TODO: show example using `scipy.optimize.curve_fit`
 
 To use ``multinorm``, we first need to fit some parameterised model
 to obtain a best-fit parameter vector and covariance matrix.
 
-Let's use `scipy.optimize_curve_fit`_ to fit some data.
+Let's use `scipy.optimize.curve_fit` to fit some data.
 
 TODO: show example using iminuit
 
@@ -39,10 +39,18 @@ https://lmfit.github.io
 https://iminuit.readthedocs.io
 https://sherpa.readthedocs.io
 
+.. _create_from_pub:
+
+Create from publication
+-----------------------
+
+TODO: show example how to take covar (or par errors) from a
+publication or blog post, i.e. as inputs.
+
 .. _create_from_samples:
 
-From samples
-------------
+Create from samples
+-------------------
 
 A common way to analyse likelihood or in Bayesian analyses the
 posterior probability distributions is to use MCMC methods that
@@ -53,8 +61,8 @@ Estimating the multivariate normal distribution from samples well
 can be difficult, there are many methods with different trade-offs.
 We recommend using a different package for this task, e.g. `sklearn.covariance`_.
 
-That said, there is a method :meth:`MultiNorm.from_samples` that calls :func:`numpy.std`
-to compute the mean vector, and :func:`numpy.cov` to compute what's sometimes called
+That said, there is a method `MultiNorm.from_samples` that calls `numpy.std`
+to compute the mean vector, and `numpy.cov` to compute what's sometimes called
 the "empirical" multivariate normal estimate.
 
 Samples should always be given as 2-dimensional arrays with shape ``(n_dim, n_samples)``.
@@ -70,31 +78,23 @@ Samples should always be given as 2-dimensional arrays with shape ``(n_dim, n_sa
     b     20.212505  1.973948
     c     30.301562  3.093609
 
-.. _create_from_pub:
-
-From publication
-----------------
-
-TODO: show example how to take covar (or par errors) from a
-publication or blog post, i.e. as inputs.
-
 .. _create_from_stack:
 
 From stack
 ----------
 
-TODO: document :meth:`MultiNorm.from_stack`
+TODO: document `MultiNorm.from_stack`
 
 .. _create_from_product:
 
 From product
 ------------
 
-TODO: document :meth:`MultiNorm.from_product`
+TODO: document `MultiNorm.from_product`
 
 .. _create_make_example:
 
 Make example
 ------------
 
-TODO: document :meth:`MultiNorm.make_example`
+TODO: document `MultiNorm.make_example`

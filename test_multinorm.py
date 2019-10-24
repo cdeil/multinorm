@@ -1,5 +1,4 @@
-"""Tests for multinorm, using pyest.
-"""
+"""Tests for multinorm, using pyest."""
 import warnings
 import pytest
 import numpy as np
@@ -8,7 +7,7 @@ from numpy.testing import assert_allclose, assert_equal
 from multinorm import MultiNorm
 
 
-def assert_multinormal_allclose(a, b):
+def assert_multinorm_allclose(a, b):
     """Assert that two `MultiNorm` objects are allclose."""
     assert a.names == b.names
     assert_allclose(a.mean, b.mean)
@@ -272,7 +271,7 @@ def test_conditional_vs_fix():
     a = mn.conditional([1, 2, 3])
     b = mn.fix([1, 2, 3])
 
-    assert_multinormal_allclose(a, b)
+    assert_multinorm_allclose(a, b)
 
 
 def test_sigma_distance(mn1):
@@ -299,22 +298,32 @@ def test_sample(mn1):
 
 
 def test_to_uncertainties(mn1):
-    # TODO: remove warning filter when this is resolved:
-    # https://github.com/lebigot/uncertainties/pull/88
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        res = mn1.to_uncertainties()
+    uncertainties = pytest.importorskip("uncertainties")
+
+    res = mn1.to_uncertainties()
+    a, b, c = res
 
     assert isinstance(res, tuple)
     assert len(res) == 3
 
-    a, b, c = res
+    assert isinstance(a, uncertainties.core.AffineScalarFunc)
     assert_allclose(a.nominal_value, 10)
     assert_allclose(a.std_dev, 1)
+
+    assert isinstance(b, uncertainties.core.AffineScalarFunc)
     assert_allclose(b.nominal_value, 20)
     assert_allclose(b.std_dev, 2)
+
+    assert isinstance(c, uncertainties.core.AffineScalarFunc)
     assert_allclose(c.nominal_value, 30)
     assert_allclose(c.std_dev, 3)
+
+def test_error_ellipse(mn2):
+    ellipse = mn2.marginal(["a", "b"]).error_ellipse()
+    assert_allclose(ellipse["xy"], (1, 3))
+    assert_allclose(ellipse["width"], 0.82842712)
+    assert_allclose(ellipse["height"], 4.82842712)
+    assert_allclose(ellipse["angle"], 157.5)
 
 
 def test_to_matplotlib_ellipse(mn1, mn2):
