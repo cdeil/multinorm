@@ -63,7 +63,7 @@ class MultiNorm:
     def __str__(self):
         return (
             f"{self.__class__.__name__} with n={self.n} parameters:\n"
-            f"{self.parameters!s}"
+            f"{self.summary_dataframe()!s}"
         )
 
     def __eq__(self, other):
@@ -246,29 +246,36 @@ class MultiNorm:
         """
         return self._scipy
 
-    @property
-    def parameters(self):
-        """Parameter table (`pandas.DataFrame`).
+    def summary_dataframe(self, n_sigma=None):
+        """Summary table (`pandas.DataFrame`).
 
-        Index is "name", columns are "mean" and "error"
+        - Index is set if present
+        - "mean" -- `mean`
+        - "error" - `error`
+        - ("lo", "hi") - confidence interval (if ``n_sigma`` is set)
+
+        Parameters
+        ----------
+        n_sigma : float
+            Number of standard deviations
+
+        Returns
+        -------
+        `pandas.DataFrame`
+            Summary table with one row per parameter
         """
         import pandas as pd
 
-        data = {"mean": self.mean, "error": self.error}
-        index = pd.Index(self.names, name="name")
-        return pd.DataFrame(data, index)
+        df = pd.DataFrame(
+            data={"mean": self.mean, "error": self.error},
+            index=pd.Index(self.names, name="name"),
+        )
 
-    def confidence_interval(self, n_sigma=1):
-        """Confidence interval table (`pandas.DataFrame`).
+        if n_sigma is not None:
+            df["lo"] = self.mean - n_sigma * self.error
+            df["hi"] = self.mean + n_sigma * self.error
 
-        Index is "name", columns are "lo" and "hi"
-        """
-        import pandas as pd
-
-        d = n_sigma * self.error
-        data = {"lo": self.mean - d, "hi": self.mean + d}
-        index = pd.Index(self.names, name="name")
-        return pd.DataFrame(data, index)
+        return df
 
     def to_uncertainties(self):
         """Convert to `uncertainties`_ objects.
@@ -314,7 +321,7 @@ class MultiNorm:
 
         coords = [
             np.linspace(row["lo"], row["hi"], num)
-            for _, row in self.confidence_interval(n_sigma).iterrows()
+            for _, row in self.summary_dataframe(n_sigma).iterrows()
         ]
         points = [_.flatten() for _ in np.meshgrid(*coords)]
         points = np.array(points).T

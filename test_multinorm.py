@@ -85,6 +85,7 @@ def test_init_singular():
 
 
 def test_str(mn1):
+    print(mn1)
     assert (
         str(mn1)
         == """\
@@ -171,11 +172,11 @@ def test_make_example():
     assert_allclose(mn.cov, expected)
 
 
-def test_parameters(mn1):
-    df = mn1.parameters
+def test_summary_dataframe(mn1):
+    df = mn1.summary_dataframe(n_sigma=1)
 
     assert isinstance(df, pd.DataFrame)
-    assert list(df.columns) == ["mean", "error"]
+    assert list(df.columns) == ["mean", "error", "lo", "hi"]
     assert list(df.index) == ["a", "b", "c"]
 
     # Access infos per parameter as Series
@@ -183,6 +184,8 @@ def test_parameters(mn1):
     assert isinstance(par, pd.Series)
     assert_allclose(par["mean"], 30)
     assert_allclose(par["error"], 3)
+    assert_allclose(par["lo"], 27)
+    assert_allclose(par["hi"], 33)
 
     # Access infos per quantity as Series
     mean = df["mean"]
