@@ -654,7 +654,7 @@ class MultiNorm:
         points : numpy.ndarray
             Point coordinates, 2-dim, shape ``(n_points, n_par)``.
         """
-        return self.scipy.rvs(size, random_state)
+        return np.atleast_2d(self.scipy.rvs(size, random_state))
 
 
 class _NameIndex:

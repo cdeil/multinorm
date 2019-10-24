@@ -301,7 +301,11 @@ def test_logpdf(mn1):
 
 def test_sample(mn1):
     res = mn1.sample(size=1, random_state=0)
-    assert_allclose(res, [10.978738, 20.800314, 35.292157])
+    assert_allclose(res, [[10.978738, 20.800314, 35.292157]])
+    assert res.shape == (1, 3)
+
+    res = mn1.sample(size=2, random_state=0)
+    assert res.shape == (2, 3)
 
 
 def test_to_uncertainties(mn1):
