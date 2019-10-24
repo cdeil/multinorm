@@ -1,5 +1,4 @@
 """Tests for multinorm, using pyest."""
-import warnings
 import pytest
 import numpy as np
 import pandas as pd
@@ -87,11 +86,11 @@ def test_init_singular():
 def test_str(mn1):
     assert str(mn1) == """\
 MultiNorm with n=3 parameters:
-      mean  err
-name           
-a     10.0  1.0
-b     20.0  2.0
-c     30.0  3.0"""
+      mean  error
+name             
+a     10.0    1.0
+b     20.0    2.0
+c     30.0    3.0"""
 
 
 def test_eq(mn1):
@@ -170,14 +169,14 @@ def test_parameters(mn1):
     df = mn1.parameters
 
     assert isinstance(df, pd.DataFrame)
-    assert list(df.columns) == ["mean", "err"]
+    assert list(df.columns) == ["mean", "error"]
     assert list(df.index) == ["a", "b", "c"]
 
     # Access infos per parameter as Series
     par = df.loc["c"]
     assert isinstance(par, pd.Series)
     assert_allclose(par["mean"], 30)
-    assert_allclose(par["err"], 3)
+    assert_allclose(par["error"], 3)
 
     # Access infos per quantity as Series
     mean = df["mean"]
@@ -186,12 +185,12 @@ def test_parameters(mn1):
 
 
 def test_err(mn1, mn2):
-    err = mn1.err
+    err = mn1.error
     assert isinstance(err, np.ndarray)
     assert err.shape == (3,)
     assert_allclose(err, [1, 2, 3])
 
-    assert_allclose(mn2.err, [1.0, 2.23606798, 1.73205081])
+    assert_allclose(mn2.error, [1.0, 2.23606798, 1.73205081])
 
 
 def test_correlation(mn1, mn2):

@@ -71,7 +71,7 @@ To see the contents, print the object:
     MultiNorm(n=3)
     names: ['a', 'b', 'c']
     mean: [10. 20. 30.]
-    err: [1. 2. 3.]
+    error: [1. 2. 3.]
     cov:
     [[1. 0. 0.]
      [0. 4. 0.]
@@ -106,9 +106,9 @@ The ``mean`` is a 1-dimensional array, and ``cov`` is a 2-dimensional array:
     >>> mn.cov.shape
     (3, 3)
 
-Parameter error vector `MultiNorm.err`::
+Parameter error vector `MultiNorm.error`::
 
-    >>> mn.err
+    >>> mn.error
     array([1., 2., 3.])
 
 Precision matrix (the inverse covariance) `MultiNorm.precision`:

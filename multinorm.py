@@ -85,7 +85,7 @@ class MultiNorm:
 
         For a given `correlation`, or in general, this will create
         a `MultiNorm` with a covariance matrix such that it's
-        `err` and `correlation` match the one specified here
+        `error` and `correlation` match the one specified here
         (up to rounding errors).
 
         See :ref:`create_from_fit` and :ref:`create_from_pub`.
@@ -106,7 +106,7 @@ class MultiNorm:
         `MultiNorm`
         """
         if err is None:
-            raise ValueError("Must set err parameter")
+            raise ValueError("Must set error parameter")
 
         err = np.asarray(err, dtype=float)
         n = len(err)
@@ -250,10 +250,10 @@ class MultiNorm:
     def parameters(self):
         """Parameter table (`pandas.DataFrame`).
 
-        Index is "name", columns are "mean" and "err"
+        Index is "name", columns are "mean" and "error"
         """
         import pandas as pd
-        data = {"mean": self.mean, "err": self.err}
+        data = {"mean": self.mean, "error": self.error}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
 
@@ -263,7 +263,7 @@ class MultiNorm:
         Index is "name", columns are "lo" and "hi"
         """
         import pandas as pd
-        d = n_sigma * self.err
+        d = n_sigma * self.error
         data = {"lo": self.mean - d, "hi": self.mean + d}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
@@ -408,7 +408,7 @@ class MultiNorm:
         return self._name_index.names
 
     @property
-    def err(self):
+    def error(self):
         r"""Parameter errors (`numpy.ndarray`).
 
         Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
@@ -424,7 +424,7 @@ class MultiNorm:
         .. math::
             C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
         """
-        return self.cov / np.outer(self.err, self.err)
+        return self.cov / np.outer(self.error, self.error)
 
     @property
     def precision(self):

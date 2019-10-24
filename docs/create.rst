@@ -72,7 +72,7 @@ Samples should always be given as 2-dimensional arrays with shape ``(n_dim, n_sa
     >>> samples = mn.sample(size=100, random_state=0)
     >>> MultiNorm.from_samples(samples, names=mn.names)
     MultiNorm with n=3 parameters:
-               mean       err
+               mean       error
     name
     a      9.875816  0.980901
     b     20.212505  1.973948
