@@ -52,9 +52,9 @@ def mn3():
     this case and give accurate results, because it's quite common.
     """
     mean = np.array([1e-10, 1, 1e10])
-    err = 1.0 * mean
+    error = 1.0 * mean
     names = ["a", "b", "c"]
-    return MultiNorm.from_err(mean, err, names=names)
+    return MultiNorm.from_error(mean, error, names=names)
 
 
 def test_init():
@@ -83,14 +83,18 @@ def test_init_singular():
     mn = MultiNorm(cov=cov)
     assert_allclose(mn.cov, cov)
 
+
 def test_str(mn1):
-    assert str(mn1) == """\
+    assert (
+        str(mn1)
+        == """\
 MultiNorm with n=3 parameters:
       mean  error
 name             
 a     10.0    1.0
 b     20.0    2.0
 c     30.0    3.0"""
+    )
 
 
 def test_eq(mn1):
@@ -105,18 +109,19 @@ def test_from_err():
     err = [1, 2, 3]
     correlation = None
     names = ["a", "b", "c"]
-    mn = MultiNorm.from_err(mean, err, correlation, names)
+    mn = MultiNorm.from_error(mean, err, correlation, names)
     assert_allclose(mn.mean, mean)
     assert_allclose(mn.cov, [[1, 0, 0], [0, 4, 0], [0, 0, 9]])
     assert mn.names == names
 
     # Test with given correlation
     correlation = [[1, 0.8, 0], [0.8, 1, 0.1], [0.0, 0.1, 1]]
-    mn = MultiNorm.from_err(err=err, correlation=correlation)
+    mn = MultiNorm.from_error(error=err, correlation=correlation)
     assert_allclose(mn.correlation, correlation)
 
     with pytest.raises(ValueError):
-        MultiNorm.from_err(mean)
+        MultiNorm.from_error(mean)
+
 
 def test_from_samples():
     points = [(10, 20, 30), (12, 20, 30)]
@@ -126,6 +131,7 @@ def test_from_samples():
     assert mn.names == names
     assert_allclose(mn.mean, [11, 20, 30])
     assert_allclose(mn.cov, [[2, 0, 0], [0, 0, 0], [0, 0, 0]])
+
 
 def test_from_stack():
     d1 = MultiNorm(mean=[1, 2], cov=np.full((2, 2), 2), names=["a", "b"])
@@ -185,10 +191,10 @@ def test_parameters(mn1):
 
 
 def test_err(mn1, mn2):
-    err = mn1.error
-    assert isinstance(err, np.ndarray)
-    assert err.shape == (3,)
-    assert_allclose(err, [1, 2, 3])
+    error = mn1.error
+    assert isinstance(error, np.ndarray)
+    assert error.shape == (3,)
+    assert_allclose(error, [1, 2, 3])
 
     assert_allclose(mn2.error, [1.0, 2.23606798, 1.73205081])
 
@@ -284,7 +290,7 @@ def test_sigma_distance(mn1):
 
     # Multiple points at once should work
     res = mn1.sigma_distance([[10, 20, 30], [10, 20, 33]])
-    assert res.shape == (2, )
+    assert res.shape == (2,)
     assert_allclose(res, [0, 1])
 
 
@@ -295,7 +301,8 @@ def test_pdf(mn1):
 
     # Multiple points at once should work
     res = mn1.pdf([[10, 20, 30], [10, 20, 30]])
-    assert res.shape == (2, )
+    assert res.shape == (2,)
+
 
 def test_logpdf(mn1):
     res = mn1.logpdf([[10, 20, 30]])
@@ -332,6 +339,7 @@ def test_to_uncertainties(mn1):
     assert_allclose(c.nominal_value, 30)
     assert_allclose(c.std_dev, 3)
 
+
 def test_error_ellipse(mn2):
     ellipse = mn2.marginal(["a", "b"]).error_ellipse()
     assert_allclose(ellipse["xy"], (1, 3))
@@ -358,10 +366,12 @@ def test_to_matplotlib_ellipse(mn1, mn2):
     with pytest.raises(ValueError):
         mn1.to_matplotlib_ellipse()
 
+
 def test_to_xarray(mn1):
     data = mn1.to_xarray("pdf")
     assert data.dims == ("a", "b", "c")
     assert_allclose(data.values[1, 2, 3], 4.20932837e-08)
+
 
 def test_name_index(mn1):
     name_index = mn1._name_index

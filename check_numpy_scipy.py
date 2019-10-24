@@ -14,7 +14,7 @@ from multinorm import MultiNorm
 mean = np.array([1e-20, 1, 1e20])
 err = 1 * mean
 names = ["a", "b", "c"]
-mn = MultiNorm.from_err(mean, err, names=names)
+mn = MultiNorm.from_error(mean, err, names=names)
 
 print(mn)
 print(mn.cov.values)

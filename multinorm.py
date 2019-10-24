@@ -77,7 +77,7 @@ class MultiNorm:
         )
 
     @classmethod
-    def from_err(cls, mean=None, err=None, correlation=None, names=None):
+    def from_error(cls, mean=None, error=None, correlation=None, names=None):
         r"""Create `MultiNorm` from parameter errors.
 
         With errors :math:`\sigma_i` this will create a
@@ -94,7 +94,7 @@ class MultiNorm:
         ----------
         mean : numpy.ndarray
             Mean vector
-        err : numpy.ndarray
+        error : numpy.ndarray
             Error vector
         correlation : numpy.ndarray
             Correlation matrix
@@ -105,18 +105,18 @@ class MultiNorm:
         -------
         `MultiNorm`
         """
-        if err is None:
+        if error is None:
             raise ValueError("Must set error parameter")
 
-        err = np.asarray(err, dtype=float)
-        n = len(err)
+        error = np.asarray(error, dtype=float)
+        n = len(error)
 
         if correlation is None:
             correlation = np.eye(n)
         else:
             correlation = np.asarray(correlation, dtype=float)
 
-        cov = correlation * np.outer(err, err)
+        cov = correlation * np.outer(error, error)
 
         return cls(mean, cov, names)
 
@@ -253,6 +253,7 @@ class MultiNorm:
         Index is "name", columns are "mean" and "error"
         """
         import pandas as pd
+
         data = {"mean": self.mean, "error": self.error}
         index = pd.Index(self.names, name="name")
         return pd.DataFrame(data, index)
@@ -263,6 +264,7 @@ class MultiNorm:
         Index is "name", columns are "lo" and "hi"
         """
         import pandas as pd
+
         d = n_sigma * self.error
         data = {"lo": self.mean - d, "hi": self.mean + d}
         index = pd.Index(self.names, name="name")
@@ -572,7 +574,7 @@ class MultiNorm:
         # https://stackoverflow.com/questions/27686240/calculate-mahalanobis-distance-using-numpy-only
         points = np.atleast_2d(points)
         d = self.mean - points
-        d2 = np.einsum('nj,jk,nk->n', d, self.precision, d)
+        d2 = np.einsum("nj,jk,nk->n", d, self.precision, d)
         return np.sqrt(np.squeeze(d2))
 
     def pdf(self, points):
