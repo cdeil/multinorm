@@ -275,17 +275,24 @@ def test_conditional_vs_fix():
 
 
 def test_sigma_distance(mn1):
-    d = mn1.sigma_distance([10, 20, 30])
-    assert_allclose(d, 0)
+    res = mn1.sigma_distance([10, 20, 30])
+    assert res.shape == ()
+    assert_allclose(res, 0)
 
-    d = mn1.sigma_distance([10, 20, 33])
-    assert_allclose(d, 1)
+    # Multiple points at once should work
+    res = mn1.sigma_distance([[10, 20, 30], [10, 20, 33]])
+    assert res.shape == (2, )
+    assert_allclose(res, [0, 1])
 
 
 def test_pdf(mn1):
     res = mn1.pdf([[10, 20, 30]])
+    assert res.shape == ()
     assert_allclose(res, 0.010582272655706831)
 
+    # Multiple points at once should work
+    res = mn1.pdf([[10, 20, 30], [10, 20, 30]])
+    assert res.shape == (2, )
 
 def test_logpdf(mn1):
     res = mn1.logpdf([[10, 20, 30]])

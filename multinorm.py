@@ -199,7 +199,7 @@ class MultiNorm:
 
         means_weighted = [_._mean_weighted for _ in distributions]
         means_weighted = np.sum(means_weighted, axis=0)
-        mean = np.dot(cov, means_weighted)
+        mean = cov @ means_weighted
         return cls(mean, cov, names)
 
     @classmethod
@@ -231,7 +231,7 @@ class MultiNorm:
         mean = rng.normal(size=n)
 
         s = rng.normal(size=(n_par, n_par))
-        cov1 = np.dot(s, s.T)
+        cov1 = s @ s.T
 
         cov2 = np.zeros((n, n))
         cov2[:n_par, :n_par] = cov1
@@ -405,7 +405,7 @@ class MultiNorm:
 
     @property
     def _mean_weighted(self):
-        return np.dot(self.precision.values, self.mean.values)
+        return self.precision.values @ self.mean.values
 
     @property
     def n(self):
@@ -551,8 +551,8 @@ class MultiNorm:
         cov21 = self.scipy.cov[np.ix_(mask2, mask1)]
         cov22 = self.scipy.cov[np.ix_(mask2, mask2)]
 
-        mean = mean1 + np.dot(cov12, np.linalg.solve(cov22, values - mean2))
-        cov = cov11 - np.dot(cov12, np.linalg.solve(cov22, cov21))
+        mean = mean1 + cov12 @ np.linalg.solve(cov22, values - mean2)
+        cov = cov11 - cov12 @ np.linalg.solve(cov22, cov21)
 
         return self.__class__(mean, cov, names)
 
@@ -579,16 +579,17 @@ class MultiNorm:
         cov = _matrix_inverse(precision)
         return self.__class__(mean, cov, names)
 
-    def sigma_distance(self, point):
+    def sigma_distance(self, points):
         """Number of standard deviations from the mean (`float`).
 
         Also called the Mahalanobis distance.
         See :ref:`theory_sigmas`.
         """
-        point = np.asanyarray(point)
-        d = self.mean.values - point
-        sigma = np.dot(np.dot(d.T, self.precision.values), d)
-        return np.sqrt(sigma)
+        # https://stackoverflow.com/questions/27686240/calculate-mahalanobis-distance-using-numpy-only
+        points = np.atleast_2d(points)
+        d = self.mean.values - points
+        d2 = np.einsum('nj,jk,nk->n', d, self.precision.values, d)
+        return np.sqrt(np.squeeze(d2))
 
     def pdf(self, points):
         """Probability density function.
