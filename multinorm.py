@@ -76,6 +76,63 @@ class MultiNorm:
             and (self.cov == other.cov).all(axis=None)
         )
 
+    @property
+    def n(self):
+        """Number of dimensions (`int`)."""
+        return self.scipy.dim
+
+    @property
+    def mean(self):
+        """Parameter mean values (`numpy.ndarray`)."""
+        return self.scipy.mean
+
+    @property
+    def cov(self):
+        """Covariance matrix (`numpy.ndarray`)."""
+        return self.scipy.cov
+
+    @property
+    def names(self):
+        """Parameter names (`list` of `str`)."""
+        return self._name_index.names
+
+    @property
+    def error(self):
+        r"""Parameter errors (`numpy.ndarray`).
+
+        Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
+        """
+        return np.sqrt(np.diag(self.scipy.cov))
+
+    @property
+    def correlation(self):
+        r"""Correlation matrix (`numpy.ndarray`).
+
+        Correlation :math:`C` is related to covariance :math:`\Sigma` via:
+
+        .. math::
+            C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
+        """
+        return self.cov / np.outer(self.error, self.error)
+
+    @property
+    def precision(self):
+        """Precision matrix (`numpy.ndarray`).
+
+        The inverse of the covariance matrix.
+
+        Sometimes called the "information matrix" or "Hesse matrix".
+        """
+        return _matrix_inverse(self.scipy.cov)
+
+    @property
+    def scipy(self):
+        """Scipy representation (`scipy.stats.multivariate_normal`).
+
+        Used for many computations internally.
+        """
+        return self._scipy
+
     @classmethod
     def from_error(cls, mean=None, error=None, correlation=None, names=None):
         r"""Create `MultiNorm` from parameter errors.
@@ -238,14 +295,6 @@ class MultiNorm:
 
         return cls(mean, cov2)
 
-    @property
-    def scipy(self):
-        """Scipy representation (`scipy.stats.multivariate_normal`).
-
-        Used for many computations internally.
-        """
-        return self._scipy
-
     def summary_dataframe(self, n_sigma=None):
         """Summary table (`pandas.DataFrame`).
 
@@ -395,55 +444,6 @@ class MultiNorm:
         ax = plt.gca() if ax is None else ax
         ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
         ax.add_artist(ellipse)
-
-    @property
-    def n(self):
-        """Number of dimensions (`int`)."""
-        return self.scipy.dim
-
-    @property
-    def mean(self):
-        """Parameter mean values (`numpy.ndarray`)."""
-        return self.scipy.mean
-
-    @property
-    def cov(self):
-        """Covariance matrix (`numpy.ndarray`)."""
-        return self.scipy.cov
-
-    @property
-    def names(self):
-        """Parameter names (`list` of `str`)."""
-        return self._name_index.names
-
-    @property
-    def error(self):
-        r"""Parameter errors (`numpy.ndarray`).
-
-        Defined as :math:`\sigma_i = \sqrt{\Sigma_{ii}}`.
-        """
-        return np.sqrt(np.diag(self.scipy.cov))
-
-    @property
-    def correlation(self):
-        r"""Correlation matrix (`numpy.ndarray`).
-
-        Correlation :math:`C` is related to covariance :math:`\Sigma` via:
-
-        .. math::
-            C_{ij} = \frac{ \Sigma_{ij} }{ \sqrt{\Sigma_{ii} \Sigma_{jj}} }
-        """
-        return self.cov / np.outer(self.error, self.error)
-
-    @property
-    def precision(self):
-        """Precision matrix (`numpy.ndarray`).
-
-        The inverse of the covariance matrix.
-
-        Sometimes called the "information matrix" or "Hesse matrix".
-        """
-        return _matrix_inverse(self.scipy.cov)
 
     def drop(self, pars):
         """Drop parameters.

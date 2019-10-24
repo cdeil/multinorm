@@ -9,6 +9,7 @@
 .. _numpy: https://docs.scipy.org/doc/numpy/reference/
 .. _scipy: https://docs.scipy.org/doc/scipy/reference/
 .. _pandas: https://pandas.pydata.org/
+.. _xarray: http://xarray.pydata.org/
 .. _matplotlib.patches.Ellipse: https://matplotlib.org/api/_as_gen/matplotlib.patches.Ellipse.html
 .. _sklearn.covariance: http://scikit-learn.org/stable/modules/covariance.html
 .. _statsmodels: http://www.statsmodels.org/
