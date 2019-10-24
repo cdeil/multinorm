@@ -306,125 +306,6 @@ class MultiNorm:
 
         return df
 
-    def to_uncertainties(self):
-        """Convert to `uncertainties`_ objects.
-
-        The `uncertainties`_ package makes it easy to
-        do error propagation on derived quantities.
-
-        See :ref:`analyse-error`.
-
-        Returns
-        -------
-        tuple (length ``n``) of ``uncertainties.core.AffineScalarFunc``
-        """
-        from uncertainties import correlated_values
-
-        return correlated_values(self.mean, self.cov)
-
-    def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
-        """Make image of the distribution (`xarray.DataArray`).
-
-        This is mostly useful for visualisation, not used by other methods.
-
-        Parameters
-        ----------
-        fcn : str
-            Function to compute data values. Choices:
-
-            - "pdf" (`pdf`)
-            - "logpdf" (`logpdf`)
-            - "stat" (``-2 * logpdf``)
-            - "sigma" (`sigma_distance`)
-
-        n_sigma : int
-            Number of standard deviations. Controls image coordinate range.
-        num : int
-            Number of pixels in each dimension. Controls image resolution.
-
-        Returns
-        -------
-        `xarray.DataArray`
-        """
-        from xarray import DataArray
-
-        coords = [
-            np.linspace(row["lo"], row["hi"], num)
-            for _, row in self.summary_dataframe(n_sigma).iterrows()
-        ]
-        points = [_.flatten() for _ in np.meshgrid(*coords)]
-        points = np.array(points).T
-
-        if fcn == "pdf":
-            data = self.pdf(points)
-        elif fcn == "logpdf":
-            data = self.logpdf(points)
-        elif fcn == "stat":
-            data = -2 * self.logpdf(points)
-        elif fcn == "sigma":
-            data = self.sigma_distance(points)
-        else:
-            raise ValueError(f"Invalid fcn: {fcn!r}")
-
-        data = data.reshape(self.n * (num,))
-
-        return DataArray(data, coords)
-
-    def error_ellipse(self, n_sigma=1):
-        """Error ellipse parameters.
-
-        TODO: document formulae and give example in the docs.
-
-        Parameters
-        ----------
-        n_sigma : int
-            Number of standard deviations. See :ref:`theory_sigmas`.
-
-        Returns
-        -------
-        dict
-            Keys "xy" (center, tuple), and floats  "width", "height", "angle"
-        """
-        # See https://stackoverflow.com/questions/12301071
-        vals, vecs = eigh(self.cov)
-        width, height = 2 * n_sigma * np.sqrt(vals)
-        angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
-
-        return {"xy": self.mean, "width": width, "height": height, "angle": angle}
-
-    def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
-        """Create error ellipse (`matplotlib.patches.Ellipse`).
-
-        See :ref:`plot`.
-
-        Parameters
-        ----------
-        n_sigma : int
-            Number of standard deviations. See :ref:`theory_sigmas`.
-
-        Returns
-        -------
-        `matplotlib.patches.Ellipse`
-        """
-        if self.n != 2:
-            raise ValueError(
-                "Ellipse only available for n=2. "
-                "To select parameters, call ``marginal`` or ``conditional`` first."
-            )
-
-        from matplotlib.patches import Ellipse
-
-        ellipse = self.error_ellipse(n_sigma)
-
-        return Ellipse(**ellipse, **kwargs)
-
-    def plot(self, ax=None, n_sigma=1, **kwargs):
-        import matplotlib.pyplot as plt
-
-        ax = plt.gca() if ax is None else ax
-        ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
-        ax.add_artist(ellipse)
-
     def marginal(self, pars):
         """Marginal distribution.
 
@@ -605,3 +486,128 @@ class MultiNorm:
         mask[pars] = True
 
         return mask
+
+    def to_uncertainties(self):
+        """Convert to `uncertainties`_ objects.
+
+        The `uncertainties`_ package makes it easy to
+        do error propagation on derived quantities.
+
+        See :ref:`analyse-error`.
+
+        Returns
+        -------
+        tuple (length ``n``) of ``uncertainties.core.AffineScalarFunc``
+        """
+        from uncertainties import correlated_values
+
+        return correlated_values(self.mean, self.cov)
+
+    def to_xarray(self, fcn="pdf", n_sigma=3, num=100):
+        """Make image of the distribution (`xarray.DataArray`).
+
+        This is mostly useful for visualisation, not used by other methods.
+
+        Parameters
+        ----------
+        fcn : str
+            Function to compute data values. Choices:
+
+            - "pdf" (`pdf`)
+            - "logpdf" (`logpdf`)
+            - "stat" (``-2 * logpdf``)
+            - "sigma" (`sigma_distance`)
+
+        n_sigma : int
+            Number of standard deviations. Controls image coordinate range.
+        num : int
+            Number of pixels in each dimension. Controls image resolution.
+
+        Returns
+        -------
+        `xarray.DataArray`
+        """
+        from xarray import DataArray
+
+        coords = [
+            np.linspace(row["lo"], row["hi"], num)
+            for _, row in self.summary_dataframe(n_sigma).iterrows()
+        ]
+        points = [_.flatten() for _ in np.meshgrid(*coords)]
+        points = np.array(points).T
+
+        if fcn == "pdf":
+            data = self.pdf(points)
+        elif fcn == "logpdf":
+            data = self.logpdf(points)
+        elif fcn == "stat":
+            data = -2 * self.logpdf(points)
+        elif fcn == "sigma":
+            data = self.sigma_distance(points)
+        else:
+            raise ValueError(f"Invalid fcn: {fcn!r}")
+
+        data = data.reshape(self.n * (num,))
+
+        return DataArray(data, coords)
+
+    def error_ellipse(self, n_sigma=1):
+        """Error ellipse parameters.
+
+        TODO: document formulae and give example in the docs.
+
+        Parameters
+        ----------
+        n_sigma : int
+            Number of standard deviations. See :ref:`theory_sigmas`.
+
+        Returns
+        -------
+        dict
+            Keys "xy" (center, tuple), and floats  "width", "height", "angle"
+        """
+        # See https://stackoverflow.com/questions/12301071
+        vals, vecs = eigh(self.cov)
+        width, height = 2 * n_sigma * np.sqrt(vals)
+        angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
+
+        return {"xy": self.mean, "width": width, "height": height, "angle": angle}
+
+    def to_matplotlib_ellipse(self, n_sigma=1, **kwargs):
+        """Create error ellipse (`matplotlib.patches.Ellipse`).
+
+        See :ref:`plot`.
+
+        Parameters
+        ----------
+        n_sigma : int
+            Number of standard deviations. See :ref:`theory_sigmas`.
+
+        Returns
+        -------
+        `matplotlib.patches.Ellipse`
+        """
+        if self.n != 2:
+            raise ValueError(
+                "Ellipse only available for n=2. "
+                "To select parameters, call ``marginal`` or ``conditional`` first."
+            )
+
+        from matplotlib.patches import Ellipse
+
+        ellipse = self.error_ellipse(n_sigma)
+
+        return Ellipse(**ellipse, **kwargs)
+
+    def plot(self, ax=None, n_sigma=1, **kwargs):
+        """Plot with matplotlib.
+
+        TODO: document
+        """
+        import matplotlib.pyplot as plt
+
+        ax = plt.gca() if ax is None else ax
+        ellipse = self.to_matplotlib_ellipse(n_sigma, **kwargs)
+        ax.add_artist(ellipse)
+
+        return ellipse
